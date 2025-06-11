@@ -1,0 +1,46 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Thank you for shopping with Exclusive! 🛍️ We're excited to confirm your order.
+  
+  div.order-details(style='background-color: #f7f7f7; padding: 2rem; border-radius: 5px; margin: 2rem 0;')
+    p.heading-secondary(style='margin-bottom: 1rem; color: #DB4444;') Order Summary
+    p Order Number: ##{order.orderNumber}
+    p Order Date: #{new Date(order.createdAt).toLocaleDateString()}
+    
+    div(style='margin: 2rem 0; border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; padding: 1rem 0;')
+      each product in order.products
+        div(style='display: flex; justify-content: space-between; margin: 1rem 0;')
+          div(style='flex: 2;')
+            p(style='font-weight: 700;')= product.name
+            p Quantity: #{product.quantity}
+          div(style='flex: 1; text-align: right;')
+            p $#{product.priceAtPurchase}
+    
+    div(style='text-align: right;')
+      p Subtotal: $#{order.subtotal}
+      p Shipping: $#{order.shippingCost}
+      p.heading-secondary(style='color: #DB4444;') Total: $#{order.totalAmount}
+    
+  div.shipping-details(style='background-color: #f7f7f7; padding: 2rem; border-radius: 5px; margin: 2rem 0;')
+    p.heading-secondary(style='margin-bottom: 1rem; color: #DB4444;') Shipping Details
+    p #{order.shippingAddress.name}
+    p #{order.shippingAddress.addressLine1}
+    if order.shippingAddress.addressLine2
+      p #{order.shippingAddress.addressLine2}
+    p #{order.shippingAddress.city}, #{order.shippingAddress.zipCode}
+    p #{order.shippingAddress.country}
+    
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+                  a(href=`${url}`, target='_blank', style='background-color: #DB4444; border-color: #DB4444;') Track Your Order
+                  
+  p If you have any questions about your order, please don't hesitate to contact our customer service team.
+  p We hope you enjoy your purchase!

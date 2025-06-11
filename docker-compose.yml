@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:latest
+    ports: ['27017:27017']
+    volumes: ['mongo_data:/data/db']
+
+  mongo-express:
+    image: mongo-express
+    ports: ['8081:8081']
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: password
+    depends_on: [mongo]
+
+  api:
+    build:
+      context: .
+      target: ${TARGET:-dev} # Uses 'dev' or 'prod' based on TARGET
+    ports:
+      - '${API_PORT:-3000}:3000'
+    volumes:
+      - ${VOLUMES:-.:/app} # Only mounts in dev, ignored in prod
+      - /app/node_modules
+    env_file: .env.${NODE_ENV:-development}
+    depends_on: [mongo]
+
+volumes:
+  mongo_data:
