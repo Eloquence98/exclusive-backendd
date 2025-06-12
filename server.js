@@ -26,45 +26,82 @@ const initializeJobs = () => {
   }
 };
 
-// Load environment config
-dotenv.config({
-  path: path.join(__dirname, `.env.${process.env.NODE_ENV || 'development'}`),
-});
+// Load environment config - only in development
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({
+    path: path.join(__dirname, `.env.${process.env.NODE_ENV || 'development'}`),
+  });
+}
 
 // Initialize application
 const app = require('./app');
 
-const { ME_CONFIG_MONGODB_URL } = process.env;
+// Database configuration
+const getDbConfig = () => {
+  const options = {
+    dbName: process.env.DB_NAME,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 30000,
+    retryWrites: true,
+    w: 'majority',
+  };
+
+  // Prefer MONGODB_URI if set, otherwise fall back to ME_CONFIG_MONGODB_URL
+  return {
+    uri: process.env.MONGODB_URI || process.env.ME_CONFIG_MONGODB_URL,
+    options,
+  };
+};
 
 // Start server
 const port = process.env.PORT || 3000;
 const server = app.listen(port, () => {
-  logger.info(`App running on port ${port}...`);
+  logger.info(`App running on port ${port} in ${process.env.NODE_ENV} mode...`);
 });
 
 // Graceful shutdown handler
-const shutdown = (exitCode = 0, signal = '') => {
+const shutdown = async (exitCode = 0, signal = '') => {
   const signalMessage = signal ? ` (${signal})` : '';
   logger.info(`Shutting down${signalMessage}...`);
 
   // Stop all active jobs
   Object.values(activeJobs).forEach((job) => job && job.stop());
 
-  server.close(() => {
-    logger.info('Server shut down complete');
-    process.exit(exitCode);
+  server.close(async () => {
+    try {
+      if (mongoose.connection.readyState === 1) {
+        await mongoose.disconnect();
+        logger.info('MongoDB connection closed');
+      }
+    } catch (err) {
+      logger.error('Error closing MongoDB connection:', err);
+    } finally {
+      logger.info('Server shut down complete');
+      process.exit(exitCode);
+    }
   });
 };
 
 // Database connection
+const { uri, options } = getDbConfig();
+
+if (!uri) {
+  logger.error('No MongoDB connection URI found in environment variables');
+  process.exit(1);
+}
+
 mongoose
-  .connect(ME_CONFIG_MONGODB_URL, { dbName: process.env.DB_NAME })
+  .connect(uri, options)
   .then(() => {
     logger.info('DB connection successful!');
     initializeJobs();
   })
   .catch((err) => {
-    logger.error('DB connection failed:', err);
+    logger.error('DB connection failed:', {
+      error: err.message,
+      stack: err.stack,
+      uri: uri.replace(/\/\/[^@]+@/, '//***:***@'), // Mask credentials in logs
+    });
     shutdown(1);
   });
 
@@ -88,3 +125,4 @@ process.on('unhandledRejection', (err) => {
 });
 
 process.on('SIGTERM', () => shutdown(0, 'SIGTERM'));
+process.on('SIGINT', () => shutdown(0, 'SIGINT'));

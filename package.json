@@ -12,11 +12,13 @@
     "copy:email-templates": "copyfiles -u 1 \"views/email/**/*\" dist/views/email",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "docker:dev": "cross-env TARGET=dev API_PORT=3000 NODE_ENV=development docker-compose up --build",
-    "docker:prod": "cross-env TARGET=prod API_PORT=3001 NODE_ENV=production DEV_VOLUMES= docker-compose up --build",
-    "docker:down": "docker-compose down -v",
-    "data:import": "cross-env NODE_ENV=development node dev-data/data/import-dev-data.js --import",
-    "data:delete": "cross-env NODE_ENV=development node dev-data/data/import-dev-data.js --delete"
+    "docker:dev": "cross-env TARGET=dev docker-compose -f docker-compose-dev.yml up --build",
+    "docker:prod": "cross-env TARGET=prod docker-compose up --build",
+    "docker:down": "docker-compose -f docker-compose-dev.yml down -v && docker-compose down -v",
+    "docker:down:prod": "docker-compose down -v",
+    "docker:down:dev": "docker-compose -f docker-compose-dev.yml down -v",
+    "data:import": "cross-env MONGODB_URI=mongodb://localhost:27017/exclusive_dev NODE_ENV=development node dev-data/data/import-dev-data.js --import",
+    "data:delete": "cross-env MONGODB_URI=mongodb://localhost:27017/exclusive_dev NODE_ENV=development node dev-data/data/import-dev-data.js --delete"
   },
   "author": "Eloquence98",
   "license": "ISC",
