@@ -66,13 +66,6 @@ module.exports = class Email {
     }
   }
 
-  async sendBookingConfirmation() {
-    await this.send(
-      'bookingConfirmation',
-      'Thank you for booking with Exclusive!',
-    );
-  }
-
   async sendWelcome() {
     await this.send('welcome', 'Welcome to the Exclusive Family!');
   }

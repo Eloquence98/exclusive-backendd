@@ -1,9 +1,10 @@
 const dotenv = require('dotenv');
-const path = require('path');
 const mongoose = require('mongoose');
 const { logger } = require('./utils/logger');
 const scheduleSaleCleanup = require('./lib/cornJobs/saleCleanup');
 const processOrders = require('./lib/cornJobs/orderProcessing');
+
+dotenv.config();
 
 // Store cron jobs references
 const activeJobs = {
@@ -25,13 +26,6 @@ const initializeJobs = () => {
     });
   }
 };
-
-// Load environment config - only in development
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config({
-    path: path.join(__dirname, `.env.${process.env.NODE_ENV || 'development'}`),
-  });
-}
 
 // Initialize application
 const app = require('./app');

@@ -1,165 +1,220 @@
 # Exclusive E-commerce Backend API
 
-A robust and secure REST API for the Exclusive e-commerce platform, built with Node.js, Express, and MongoDB.
+A robust and secure REST API for the Exclusive e-commerce platform, built with Node.js, Express, and MongoDB. Features include user authentication, product management, order processing, and email notifications.
 
-## Features
+## Tech Stack
 
-- **User Management**
-
-  - Regular and Guest User Support
-  - JWT Authentication
-  - Password Reset
-  - User Profile Management
-
-- **Product Management**
-
-  - Product CRUD Operations
-  - Category Management
-  - Search and Filtering
-  - Ratings and Reviews
-
-- **Order System**
-
-  - Guest & Registered User Orders
-  - Order Status Tracking
-  - Status History with Timestamps
-  - Automatic Status Progression
-
-- **Security Features**
-  - JWT Authentication
-  - Rate Limiting
-  - Data Sanitization
-  - XSS Protection
-  - Parameter Pollution Prevention
-  - CORS Support
+- **Runtime**: Node.js (≥14)
+- **Framework**: Express.js
+- **Database**: MongoDB
+- **Email Templates**: Pug
+- **Authentication**: JWT
+- **Container**: Docker
+- **API Testing**: Postman (collection included)
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- MongoDB (v4.4 or higher)
-- npm or yarn
+Choose either Option A or B:
 
-## Installation
+### Option A: Using npm scripts (Recommended for Development)
 
-1. Clone the repository:
+- Node.js and npm (for running scripts)
+- Docker and Docker Compose
+- Git
+- A text editor
+- Mailtrap account (for email testing)
+
+### Option B: Using Docker directly
+
+- Docker and Docker Compose
+- Git
+- A text editor
+- Mailtrap account (for email testing)
+
+No need to install MongoDB - it runs in a container!
+
+## Quick Start
+
+1. **Clone the repository**
 
    ```bash
-   git clone [repository-url]
+   git clone https://github.com/Eloquence98/exclusive-backendd.git
    cd exclusive-backend
    ```
 
-2. Install dependencies:
+2. **Create environment file**
 
    ```bash
-   npm install
-   ```
+   # Create .env file in the root directory
+   touch .env
 
-3. Create a config.env file in the root directory with the following variables:
-
-   ```env
+   # Add the following variables (replace values as needed)
    NODE_ENV=development
    PORT=3000
-   MONGODB_URI=your_mongodb_uri
    DB_NAME=exclusive
-
-   JWT_SECRET=your_jwt_secret_at_least_32_chars_long
+   JWT_SECRET=your_secret_key_here_min_32_chars_long
    JWT_EXPIRES_IN=90d
    JWT_COOKIE_EXPIRES_IN=90
-
-   EMAIL_HOST=your_email_host
-   EMAIL_PORT=2525
-   EMAIL_USERNAME=your_email_username
-   EMAIL_PASSWORD=your_email_password
-
    FRONTEND_URL=http://localhost:3000
+
+   # Mailtrap credentials (for email testing)
+   EMAIL_HOST=smtp.mailtrap.io
+   EMAIL_PORT=2525
+   EMAIL_USERNAME=your_mailtrap_username
+   EMAIL_PASSWORD=your_mailtrap_password
+   EMAIL_FROM=noreply@exclusive.com
    ```
 
-4. Start the server:
+3. **Start the development environment**
+
+   Using npm (Option A):
+
+   ```bash
+   npm run docker:dev
+   ```
+
+   Using Docker directly (Option B):
 
    ```bash
    # Development mode
-   npm run dev
+   docker compose up --build -d
 
-   # Production mode
-   npm start
+   # View logs
+   docker compose logs -f api
    ```
 
-## API Documentation
+4. **Import development data**
 
-### Authentication Endpoints
+   Using npm (Option A):
 
-\`\`\`
-POST /api/v1/users/signup
-POST /api/v1/users/login
-POST /api/v1/users/forgotPassword
-PATCH /api/v1/users/resetPassword/:token
-\`\`\`
+   ```bash
+   npm run data:import
+   ```
 
-### User Endpoints
+   Using Docker directly (Option B):
 
-\`\`\`
-GET /api/v1/users/me
-PATCH /api/v1/users/updateMe
-DELETE /api/v1/users/deleteMe
-\`\`\`
+   ```bash
+   docker compose exec api node dev-data/data/import-dev-data.js --import
+   ```
 
-### Product Endpoints
+5. **Verify the setup**
+   - API is running at: http://localhost:3000
+   - MongoDB Express UI: http://localhost:8081
+   - Check container status: `docker compose ps`
 
-\`\`\`
-GET /api/v1/products
-GET /api/v1/products/:id
-POST /api/v1/products
-PATCH /api/v1/products/:id
-DELETE /api/v1/products/:id
-\`\`\`
+## Common Commands
 
-### Order Endpoints
+### Using npm (Option A)
 
-\`\`\`
-POST /api/v1/orders
-GET /api/v1/orders
-GET /api/v1/orders/:id
-GET /api/v1/orders/my-orders
-\`\`\`
+```bash
+# Start development environment
+npm run docker:dev
 
-### Review Endpoints
+# Start production environment
+npm run docker:prod
 
-\`\`\`
-POST /api/v1/products/:productId/reviews
-GET /api/v1/products/:productId/reviews
-PATCH /api/v1/reviews/:id
-DELETE /api/v1/reviews/:id
-\`\`\`
+# Stop all containers
+npm run docker:down
 
-## Error Handling
+# Import test data
+npm run data:import
 
-The API uses a centralized error handling system. All errors follow this format:
-
-```json
-{
-  "status": "error",
-  "error": {
-    "statusCode": 404,
-    "status": "error",
-    "isOperational": true
-  },
-  "message": "Error message here",
-  "stack": "Error stack trace (only in development)"
-}
+# Delete all data
+npm run data:delete
 ```
+
+### Using Docker directly (Option B)
+
+```bash
+# Start development environment
+docker compose up --build -d
+
+# Start production environment
+TARGET=prod docker compose up --build -d
+
+# Stop all containers
+docker compose down -v
+
+# Import test data
+docker compose exec api node dev-data/data/import-dev-data.js --import
+
+# Delete all data
+docker compose exec api node dev-data/data/import-dev-data.js --delete
+```
+
+## Testing the API
+
+1. **Create a new user**
+
+   ```bash
+   curl -X POST http://localhost:3000/api/v1/users/signup \
+   -H "Content-Type: application/json" \
+   -d '{
+     "name": "Test User",
+     "email": "test@example.com",
+     "password": "test1234",
+     "passwordConfirm": "test1234"
+   }'
+   ```
+
+2. **Login**
+
+   ```bash
+   curl -X POST http://localhost:3000/api/v1/users/login \
+   -H "Content-Type: application/json" \
+   -d '{
+     "email": "test@example.com",
+     "password": "test1234"
+   }'
+   ```
+
+3. **View products** (no authentication required)
+   ```bash
+   curl http://localhost:3000/api/v1/products
+   ```
+
+## API Endpoints
+
+### Authentication
+
+- POST `/api/v1/users/signup` - Register new user
+- POST `/api/v1/users/login` - Login user
+- POST `/api/v1/users/forgotPassword` - Request password reset
+- PATCH `/api/v1/users/resetPassword/:token` - Reset password
+
+### Products
+
+- GET `/api/v1/products` - Get all products
+- GET `/api/v1/products/:id` - Get single product
+- POST `/api/v1/products` - Create product (Admin)
+- PATCH `/api/v1/products/:id` - Update product (Admin)
+- DELETE `/api/v1/products/:id` - Delete product (Admin)
+
+### Orders
+
+- POST `/api/v1/orders` - Create order
+- GET `/api/v1/orders` - Get all orders (Admin)
+- GET `/api/v1/orders/:id` - Get single order
+- GET `/api/v1/orders/my-orders` - Get user orders
+
+### Reviews
+
+- POST `/api/v1/products/:productId/reviews` - Create review
+- GET `/api/v1/products/:productId/reviews` - Get product reviews
+- PATCH `/api/v1/reviews/:id` - Update review
+- DELETE `/api/v1/reviews/:id` - Delete review
 
 ## Development
 
 ### Available Scripts
 
-- `npm start`: Start the server in production mode
-- `npm run dev`: Start the server in development mode
-- `npm run debug`: Start the server in debug mode
-- `npm test`: Run tests
-- `npm run import`: Import sample data
-- `npm run delete-data`: Delete all data from database
+- `npm run docker:dev` - Start development environment
+- `npm run docker:prod` - Start production environment
+- `npm run docker:down` - Stop and remove containers
+- `npm run data:import` - Import sample data
+- `npm run data:delete` - Delete all data
 
-### Folder Structure
+### Directory Structure
 
 ```
 exclusive-backend/
@@ -167,18 +222,33 @@ exclusive-backend/
 ├── models/         # Database models
 ├── routes/         # API routes
 ├── utils/          # Utility functions
-├── middleware/     # Custom middleware
-├── public/         # Static files
-└── dev-data/       # Development data
+├── views/          # Email templates
+├── dev-data/       # Sample data
+└── docker/         # Docker configuration
 ```
 
-## Production Deployment
+## Stopping the Application
 
-1. Set NODE_ENV to 'production'
-2. Configure proper security headers
-3. Set up proper MongoDB indexes
-4. Enable rate limiting
-5. Set up proper CORS configuration
+```bash
+npm run docker:down
+```
+
+## Troubleshooting
+
+1. **Containers not starting**
+
+   - Check Docker daemon is running
+   - Ensure ports 3000, 27017, and 8081 are free
+   - View logs: `docker compose logs`
+
+2. **Email not working**
+
+   - Verify Mailtrap credentials in .env
+   - Check email logs in container
+
+3. **Database issues**
+   - Access Mongo Express UI at http://localhost:8081
+   - Check MongoDB logs: `docker compose logs mongo`
 
 ## Contributing
 
@@ -186,8 +256,8 @@ exclusive-backend/
 2. Create your feature branch
 3. Commit your changes
 4. Push to the branch
-5. Create a new Pull Request
+5. Create a Pull Request
 
 ## License
 
-This project is available for personal use. Commercial use or tutorial/course creation based on this project is not permitted.
+This project is licensed under the ISC License.
