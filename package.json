@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "docker:dev": "cross-env TARGET=dev docker-compose up --build -d",
-    "docker:prod": "cross-env TARGET=prod docker-compose up --build"
+    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d"
   },
   "author": "Eloquence98",
   "license": "ISC",

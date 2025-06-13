@@ -2,9 +2,15 @@ services:
   api:
     build:
       context: .
-      target: dev
+      target: ${TARGET:-dev}
     ports:
       - '3000:3000'
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+    # !!! IMPORTANT FOR PROD TESTING !!!
+    # Comment out these volumes when testing production builds locally
+    # to simulate actual production container behavior (no host mounts)
+    # Keep these active only for development
     volumes:
       - .:/app
       - /app/node_modules
