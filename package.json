@@ -11,9 +11,7 @@
     "clean": "rimraf dist",
     "copy:email-templates": "copyfiles -u 1 \"views/email/**/*\" dist/views/email",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "docker:dev": "cross-env TARGET=dev docker-compose up --build -d",
-    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d"
+    "format": "prettier --write ."
   },
   "author": "Eloquence98",
   "license": "ISC",
