@@ -109,21 +109,30 @@ exports.deleteUser = factory.deleteOne(User);
 
 // Guest user middleware
 exports.createGuestUser = catchAsync(async (req, res, next) => {
-  if (req.user) return next(); // Skip if user exists
+  if (req.user) return next();
 
   if (!req.body.guestInfo) {
     return next(new AppError('Guest information required', 400));
   }
 
-  // First check if guest user exists
+  // Check for ANY user with this email (guest OR regular)
   const existingUser = await User.findOne({
     email: req.body.guestInfo.email,
-    isGuest: true,
   });
 
   if (existingUser) {
-    // Use existing guest user
-    req.user = existingUser;
+    if (existingUser.isGuest) {
+      // Reuse existing guest
+      req.user = existingUser;
+    } else {
+      // Regular user exists - they should login instead
+      return next(
+        new AppError(
+          'An account with this email already exists. Please login instead.',
+          400,
+        ),
+      );
+    }
   } else {
     // Create new guest user
     const newUser = await User.create({
