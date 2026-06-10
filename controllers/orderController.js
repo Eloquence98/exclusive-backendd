@@ -336,6 +336,86 @@ exports.cancelOrder = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.updateOrderStatus = catchAsync(async (req, res, next) => {
+  const { orderStatus, trackingNumber } = req.body;
+
+  // Validate status
+  const validStatuses = [
+    'processing',
+    'confirmed',
+    'shipped',
+    'delivered',
+    'cancelled',
+  ];
+  if (!validStatuses.includes(orderStatus)) {
+    return next(
+      new AppError(
+        `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+        400,
+      ),
+    );
+  }
+
+  const order = await Order.findById(req.params.id).populate('user');
+
+  if (!order) {
+    return next(new AppError('Order not found', 404));
+  }
+
+  const oldStatus = order.orderStatus;
+
+  // Only update if status actually changed
+  if (oldStatus === orderStatus) {
+    return next(new AppError('Order already has this status', 400));
+  }
+
+  order.orderStatus = orderStatus;
+  order.statusManuallyUpdated = true;
+
+  // Add tracking number if provided
+  if (trackingNumber) {
+    order.trackingNumber = trackingNumber;
+  }
+
+  // If marking as delivered, mark payment as paid
+  if (
+    orderStatus === 'delivered' &&
+    order.paymentMethod === 'cash_on_delivery'
+  ) {
+    order.paymentStatus = 'paid';
+  }
+
+  await order.save();
+
+  // Send status update email
+  try {
+    const url = `${process.env.FRONTEND_URL}/orders/${order.orderNumber}`;
+    await new Email(order.user, url).sendOrderStatusUpdate(order, oldStatus);
+
+    logger.info('Order status update email sent successfully', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      oldStatus,
+      newStatus: orderStatus,
+      userId: order.user._id,
+      email: order.user.email,
+    });
+  } catch (emailErr) {
+    logger.error('Failed to send order status email:', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      error: emailErr.message,
+      stack: emailErr.stack,
+    });
+    // Don't fail the status update if email fails
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: { order },
+  });
+});
+
 // Use factory functions for standard CRUD operations
 exports.getAllOrders = factory.getAll(Order);
 exports.getOrder = factory.getOne(Order);

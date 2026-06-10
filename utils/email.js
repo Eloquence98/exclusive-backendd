@@ -84,4 +84,25 @@ module.exports = class Email {
       `Order Confirmation - Order #${order.orderNumber}`,
     );
   }
+
+  async sendOrderStatusUpdate(order, oldStatus) {
+    this.order = order;
+    this.oldStatus = oldStatus;
+
+    // Create friendly status names for subject
+    const statusNames = {
+      processing: 'Processing',
+      confirmed: 'Confirmed',
+      shipped: 'Shipped',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled',
+    };
+
+    const newStatusName = statusNames[order.orderStatus] || order.orderStatus;
+
+    await this.send(
+      'orderStatusUpdate',
+      `Order Update: Your Order is Now ${newStatusName} - #${order.orderNumber}`,
+    );
+  }
 };

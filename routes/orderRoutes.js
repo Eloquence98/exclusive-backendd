@@ -45,6 +45,8 @@ router
   .patch(orderController.updateOrder)
   .delete(orderController.deleteOrder);
 
+router.patch('/:id/status', orderController.updateOrderStatus);
+
 router.get('/stats', orderController.getOrderStats);
 router.get('/monthly-stats/:year', orderController.getMonthlyStats);
 

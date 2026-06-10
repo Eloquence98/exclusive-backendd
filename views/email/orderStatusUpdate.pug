@@ -1,0 +1,54 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Great news! Your order status has been updated. 📦
+  
+  div.order-details(style='background-color: #f7f7f7; padding: 2rem; border-radius: 5px; margin: 2rem 0;')
+    p.heading-secondary(style='margin-bottom: 1rem; color: #DB4444;') Order Update
+    p Order Number: ##{order.orderNumber}
+    
+    div(style='margin: 2rem 0; padding: 1.5rem; background-color: #fff; border-left: 4px solid #DB4444; border-radius: 4px;')
+      p(style='margin: 0; font-size: 12px; color: #7D8184; text-transform: uppercase; letter-spacing: 1px;') Status Changed
+      p(style='margin: 0.5rem 0 0 0;')
+        span(style='text-decoration: line-through; color: #999;')= oldStatus.toUpperCase()
+        span(style='margin: 0 1rem; color: #DB4444;') →
+        span(style='font-weight: 700; color: #DB4444; font-size: 18px;')= order.orderStatus.toUpperCase()
+    
+    if order.orderStatus === 'confirmed'
+      p(style='margin-top: 2rem;') ✅ Your order has been confirmed and is being prepared for shipment.
+    else if order.orderStatus === 'shipped'
+      p(style='margin-top: 2rem;') 🚚 Your order is on its way! It should arrive soon.
+      if order.trackingNumber
+        p Tracking Number: 
+          strong= order.trackingNumber
+    else if order.orderStatus === 'delivered'
+      p(style='margin-top: 2rem;') 🎉 Your order has been delivered! We hope you love your purchase.
+    else if order.orderStatus === 'cancelled'
+      p(style='margin-top: 2rem;') ❌ Your order has been cancelled. If you didn't request this, please contact us immediately.
+    
+  div.order-summary(style='background-color: #f7f7f7; padding: 2rem; border-radius: 5px; margin: 2rem 0;')
+    p.heading-secondary(style='margin-bottom: 1rem; color: #DB4444;') Order Summary
+    
+    each product in order.products
+      div(style='margin: 1rem 0; padding-bottom: 1rem; border-bottom: 1px solid #e0e0e0;')
+        p(style='font-weight: 700; margin-bottom: 0.5rem;')= product.name
+        p(style='margin: 0; color: #7D8184;') Quantity: #{product.quantity} × $#{product.priceAtPurchase}
+    
+    div(style='margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #DB4444;')
+      p(style='margin: 0; text-align: right;')
+        span Total: 
+        strong(style='font-size: 18px; color: #DB4444;') $#{order.totalAmount}
+    
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+                  a(href=`${url}`, target='_blank', style='background-color: #DB4444; border-color: #DB4444;') Track Your Order
+                  
+  p If you have any questions about your order, please don't hesitate to contact our customer service team.
+  p - Team Exclusive
