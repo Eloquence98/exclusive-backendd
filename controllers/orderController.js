@@ -84,6 +84,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
   // 2) Validate and get product details
   const products = await validateAndGetProducts(req.body.products);
 
+  // 🔧 TODO: Reduce stock for each product
+
   // 3) Calculate order amounts
   const { subtotal, shippingCost, totalAmount } =
     calculateOrderAmounts(products);
