@@ -86,3 +86,7 @@ api-docs/
 *.pem
 .vercel
 .next
+
+# API Testing - Personal files
+api.http
+*.local.http

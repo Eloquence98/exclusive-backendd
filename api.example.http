@@ -1,0 +1,713 @@
+###############################################################################
+# EXCLUSIVE E-COMMERCE API - REST CLIENT TEMPLATE
+###############################################################################
+# ⚠️  SECURITY NOTICE:
+# - This is a TEMPLATE file with example data only
+# - Never commit real tokens, passwords, or API keys
+# - Copy to api.http and add your real credentials there
+# - api.http is in .gitignore and will not be tracked
+###############################################################################
+# Setup Instructions:
+# 1. Copy this file: cp api.example.http api.http
+# 2. Replace placeholder values with real data
+# 3. Never commit api.http (it's in .gitignore)
+###############################################################################
+
+###############################################################################
+# VARIABLES - REPLACE THESE
+###############################################################################
+
+@baseUrl = http://localhost:3000/api/v1
+@frontendUrl = http://localhost:5173
+
+# Update these after running respective requests
+@authToken = YOUR_JWT_TOKEN_HERE
+@adminToken = YOUR_ADMIN_JWT_TOKEN_HERE
+@productId = YOUR_PRODUCT_ID_HERE
+@orderId = YOUR_ORDER_ID_HERE
+@orderNumber = YOUR_ORDER_NUMBER_HERE
+@reviewId = YOUR_REVIEW_ID_HERE
+@userId = YOUR_USER_ID_HERE
+
+# Test credentials (EXAMPLE ONLY - Replace with your test data)
+@testEmail = testuser@example.com
+@testPassword = test1234
+@adminEmail = admin@example.com
+@adminPassword = admin1234
+
+
+###############################################################################
+# 1. AUTHENTICATION
+###############################################################################
+
+### 1.1 Sign Up (New User)
+POST {{baseUrl}}/users/signup
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "{{testEmail}}",
+  "password": "{{testPassword}}",
+  "passwordConfirm": "{{testPassword}}"
+}
+
+### 1.2 Login (Get Token)
+# @name login
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}",
+  "password": "{{testPassword}}"
+}
+
+### 1.3 Login as Admin
+# @name adminLogin
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### 1.4 Logout
+GET {{baseUrl}}/users/logout
+Authorization: Bearer {{authToken}}
+
+### 1.5 Forgot Password
+POST {{baseUrl}}/users/forgotPassword
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}"
+}
+
+### 1.6 Reset Password (Replace TOKEN with actual token from email)
+PATCH {{baseUrl}}/users/resetPassword/TOKEN_FROM_EMAIL
+Content-Type: application/json
+
+{
+  "password": "newpassword123",
+  "passwordConfirm": "newpassword123"
+}
+
+
+###############################################################################
+# 2. USER MANAGEMENT (Protected Routes)
+###############################################################################
+
+### 2.1 Get Current User
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{authToken}}
+
+### 2.2 Update Current User
+PATCH {{baseUrl}}/users/updateMe
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "email": "newemail@example.com"
+}
+
+### 2.3 Update User Photo
+PATCH {{baseUrl}}/users/updateMe
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="photo"; filename="profile.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 2.4 Update Password
+PATCH {{baseUrl}}/users/updateMyPassword
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "passwordCurrent": "{{testPassword}}",
+  "password": "newpassword123",
+  "passwordConfirm": "newpassword123"
+}
+
+### 2.5 Delete Current User (Deactivate)
+DELETE {{baseUrl}}/users/deleteMe
+Authorization: Bearer {{authToken}}
+
+
+###############################################################################
+# 3. ADMIN - USER MANAGEMENT
+###############################################################################
+
+### 3.1 Get All Users (Admin Only)
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
+
+### 3.2 Get All Users with Pagination
+GET {{baseUrl}}/users?page=1&limit=10
+Authorization: Bearer {{adminToken}}
+
+### 3.3 Get Specific User (Admin Only)
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{adminToken}}
+
+### 3.4 Update User (Admin Only)
+PATCH {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "admin",
+  "active": true
+}
+
+### 3.5 Delete User (Admin Only)
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{adminToken}}
+
+
+###############################################################################
+# 4. PRODUCTS - PUBLIC ROUTES
+###############################################################################
+
+### 4.1 Get All Products
+GET {{baseUrl}}/products
+
+### 4.2 Get All Products with Filtering
+GET {{baseUrl}}/products?category=t-shirts&price[lte]=50
+
+### 4.3 Get All Products with Sorting
+GET {{baseUrl}}/products?sort=-ratingsAverage,price
+
+### 4.4 Get All Products with Pagination
+GET {{baseUrl}}/products?page=1&limit=12
+
+### 4.5 Get All Products with Field Limiting
+GET {{baseUrl}}/products?fields=title,price,imageCover,category
+
+### 4.6 Get All Products - Complex Query
+GET {{baseUrl}}/products?category=t-shirts&price[gte]=20&price[lte]=100&sort=-ratingsAverage&fields=title,price,currentPrice,imageCover,ratingsAverage&page=1&limit=10
+
+### 4.7 Get Top Rated Products
+GET {{baseUrl}}/products/top-rated
+
+### 4.8 Get Trending Products
+GET {{baseUrl}}/products/trending
+
+### 4.9 Get Featured Products
+GET {{baseUrl}}/products/featured
+
+### 4.10 Get Products by Category
+GET {{baseUrl}}/products/category/t-shirts
+
+### 4.11 Get Products by Category (All Categories)
+# Categories: t-shirts, shirts, polos, jeans, shorts, trousers, activewear, fragrances, shoes, underwear
+GET {{baseUrl}}/products/category/shoes
+
+### 4.12 Get Single Product by ID
+GET {{baseUrl}}/products/{{productId}}
+
+### 4.13 Get Product by Slug
+GET {{baseUrl}}/products/premium-cotton-tshirt
+
+
+###############################################################################
+# 5. PRODUCTS - ADMIN ROUTES
+###############################################################################
+
+### 5.1 Create Product (Admin Only)
+# @name createProduct
+POST {{baseUrl}}/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "Premium Cotton T-Shirt",
+  "description": "High-quality 100% cotton t-shirt with premium finish",
+  "price": 29.99,
+  "category": "t-shirts",
+  "size": "M",
+  "stock": 100,
+  "brand": "Exclusive",
+  "tags": ["cotton", "casual", "summer"],
+  "imageCover": "default-tshirt.jpg",
+  "images": ["tshirt-1.jpg", "tshirt-2.jpg"],
+  "isFeatured": true
+}
+
+### 5.2 Create Product with Sale
+POST {{baseUrl}}/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "Summer Sale Polo Shirt",
+  "description": "Classic polo shirt on limited time sale",
+  "price": 49.99,
+  "salePrice": 34.99,
+  "onSale": true,
+  "saleStartDate": "2024-01-01T00:00:00.000Z",
+  "saleEndDate": "2024-12-31T23:59:59.999Z",
+  "category": "polos",
+  "size": "L",
+  "stock": 50,
+  "imageCover": "default-polo.jpg",
+  "isFeatured": false
+}
+
+### 5.3 Update Product (Admin Only)
+PATCH {{baseUrl}}/products/{{productId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": 39.99,
+  "stock": 75,
+  "isFeatured": true
+}
+
+### 5.4 Update Product with Images (Admin Only)
+PATCH {{baseUrl}}/products/{{productId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="imageCover"; filename="cover.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/cover-image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="images"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="images"; filename="image2.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/image2.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 5.5 Delete Product (Soft Delete - Admin Only)
+DELETE {{baseUrl}}/products/{{productId}}
+Authorization: Bearer {{adminToken}}
+
+### 5.6 Get Product Stats (Admin Only)
+GET {{baseUrl}}/products/product-stats
+Authorization: Bearer {{adminToken}}
+
+### 5.7 Get Sales Stats (Admin Only)
+GET {{baseUrl}}/products/sales-stats
+Authorization: Bearer {{adminToken}}
+
+### 5.8 Get Inventory Stats (Admin Only)
+GET {{baseUrl}}/products/inventory-stats
+Authorization: Bearer {{adminToken}}
+
+### 5.9 Get Category Stats (Admin Only)
+GET {{baseUrl}}/products/category-stats
+Authorization: Bearer {{adminToken}}
+
+
+###############################################################################
+# 6. ORDERS - GUEST CHECKOUT
+###############################################################################
+
+### 6.1 Create Order as Guest
+# @name createGuestOrder
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "guestInfo": {
+    "name": "Guest User",
+    "email": "guest@example.com"
+  },
+  "products": [
+    {
+      "product": "{{productId}}",
+      "quantity": 2
+    }
+  ],
+  "shippingAddress": {
+    "name": "Guest User",
+    "phone": "+1234567890",
+    "addressLine1": "123 Main Street",
+    "addressLine2": "Apt 4B",
+    "city": "New York",
+    "zipCode": "10001",
+    "country": "USA"
+  }
+}
+
+### 6.2 Create Order with Multiple Products (Guest)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "guestInfo": {
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "products": [
+    {
+      "product": "PRODUCT_ID_1",
+      "quantity": 1
+    },
+    {
+      "product": "PRODUCT_ID_2",
+      "quantity": 3
+    }
+  ],
+  "shippingAddress": {
+    "name": "John Doe",
+    "phone": "+1987654321",
+    "addressLine1": "456 Oak Avenue",
+    "city": "Los Angeles",
+    "zipCode": "90001",
+    "country": "USA"
+  }
+}
+
+
+###############################################################################
+# 7. ORDERS - AUTHENTICATED USER
+###############################################################################
+
+### 7.1 Create Order as Authenticated User
+POST {{baseUrl}}/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "products": [
+    {
+      "product": "{{productId}}",
+      "quantity": 1
+    }
+  ],
+  "shippingAddress": {
+    "name": "Test User",
+    "phone": "+1234567890",
+    "addressLine1": "789 Pine Street",
+    "city": "Chicago",
+    "zipCode": "60601",
+    "country": "USA"
+  }
+}
+
+### 7.2 Get My Orders
+GET {{baseUrl}}/orders/my-orders
+Authorization: Bearer {{authToken}}
+
+### 7.3 Get My Recent Orders (Last 5)
+GET {{baseUrl}}/orders/recent
+Authorization: Bearer {{authToken}}
+
+### 7.4 Cancel Order
+PATCH {{baseUrl}}/orders/{{orderId}}/cancel
+Authorization: Bearer {{authToken}}
+
+
+###############################################################################
+# 8. ORDERS - PUBLIC TRACKING
+###############################################################################
+
+### 8.1 Track Order by Order Number (No Auth Required)
+GET {{baseUrl}}/orders/track/{{orderNumber}}
+
+### 8.2 Track Order Example
+GET {{baseUrl}}/orders/track/EXC-20240115-0001
+
+
+###############################################################################
+# 9. ORDERS - ADMIN ROUTES
+###############################################################################
+
+### 9.1 Get All Orders (Admin Only)
+GET {{baseUrl}}/orders
+Authorization: Bearer {{adminToken}}
+
+### 9.2 Get All Orders with Filtering
+GET {{baseUrl}}/orders?orderStatus=processing
+Authorization: Bearer {{adminToken}}
+
+### 9.3 Get All Orders with Pagination
+GET {{baseUrl}}/orders?page=1&limit=20&sort=-createdAt
+Authorization: Bearer {{adminToken}}
+
+### 9.4 Get Single Order (Admin Only)
+GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{adminToken}}
+
+### 9.5 Update Order (Admin Only)
+PATCH {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "paymentStatus": "paid"
+}
+
+### 9.6 Update Order Status (Admin Only) - Confirmed
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderStatus": "confirmed"
+}
+
+### 9.7 Update Order Status - Shipped with Tracking
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderStatus": "shipped",
+  "trackingNumber": "TRK123456789"
+}
+
+### 9.8 Update Order Status - Delivered
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderStatus": "delivered"
+}
+
+### 9.9 Update Order Status - Cancelled
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderStatus": "cancelled"
+}
+
+### 9.10 Delete Order (Admin Only)
+DELETE {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{adminToken}}
+
+### 9.11 Get Order Statistics (Admin Only)
+GET {{baseUrl}}/orders/stats
+Authorization: Bearer {{adminToken}}
+
+### 9.12 Get Monthly Statistics (Admin Only)
+GET {{baseUrl}}/orders/monthly-stats/2024
+Authorization: Bearer {{adminToken}}
+
+
+###############################################################################
+# 10. REVIEWS
+###############################################################################
+
+### 10.1 Get All Reviews for a Product
+GET {{baseUrl}}/products/{{productId}}/reviews
+
+### 10.2 Get All Reviews with Pagination
+GET {{baseUrl}}/products/{{productId}}/reviews?page=1&limit=10
+
+### 10.3 Create Review (User Only - Must be Authenticated)
+# @name createReview
+POST {{baseUrl}}/products/{{productId}}/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "review": "Excellent product! The quality is outstanding and fits perfectly. Highly recommend to everyone.",
+  "rating": 5
+}
+
+### 10.4 Create Review - Different Ratings
+POST {{baseUrl}}/products/{{productId}}/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "review": "Good product but sizing runs a bit small. Material quality is decent for the price.",
+  "rating": 4
+}
+
+### 10.5 Get Single Review
+GET {{baseUrl}}/reviews/{{reviewId}}
+Authorization: Bearer {{authToken}}
+
+### 10.6 Update Review (Author or Admin Only)
+PATCH {{baseUrl}}/reviews/{{reviewId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "review": "Updated review: After using for a month, this is absolutely fantastic!",
+  "rating": 5
+}
+
+### 10.7 Delete Review (Author or Admin Only)
+DELETE {{baseUrl}}/reviews/{{reviewId}}
+Authorization: Bearer {{authToken}}
+
+
+###############################################################################
+# 11. ADVANCED QUERIES & FILTERS
+###############################################################################
+
+### 11.1 Products - Price Range Filter
+GET {{baseUrl}}/products?price[gte]=20&price[lte]=100
+
+### 11.2 Products - Multiple Categories
+GET {{baseUrl}}/products?category=t-shirts,shirts,polos
+
+### 11.3 Products - In Stock Only
+GET {{baseUrl}}/products?stock[gt]=0
+
+### 11.4 Products - On Sale Only
+GET {{baseUrl}}/products?onSale=true
+
+### 11.5 Products - High Rated
+GET {{baseUrl}}/products?ratingsAverage[gte]=4.5
+
+### 11.6 Products - Complex Search
+GET {{baseUrl}}/products?category=t-shirts&price[lte]=50&ratingsAverage[gte]=4&stock[gt]=10&sort=-ratingsAverage,price&fields=title,price,currentPrice,ratingsAverage,stock
+
+### 11.7 Orders - Filter by Status
+GET {{baseUrl}}/orders/my-orders?orderStatus=processing
+Authorization: Bearer {{authToken}}
+
+### 11.8 Orders - Filter by Date Range
+GET {{baseUrl}}/orders/my-orders?createdAt[gte]=2024-01-01
+Authorization: Bearer {{authToken}}
+
+### 11.9 Orders - Filter by Total Amount
+GET {{baseUrl}}/orders?totalAmount[gte]=100
+Authorization: Bearer {{adminToken}}
+
+
+###############################################################################
+# 12. ERROR TESTING
+###############################################################################
+
+### 12.1 Test 404 - Invalid Route
+GET {{baseUrl}}/invalid-route
+
+### 12.2 Test 401 - Unauthorized (No Token)
+GET {{baseUrl}}/users/me
+
+### 12.3 Test 403 - Forbidden (User tries admin route)
+GET {{baseUrl}}/users
+Authorization: Bearer {{authToken}}
+
+### 12.4 Test 400 - Invalid Data (Create Product without required fields)
+POST {{baseUrl}}/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "Incomplete Product"
+}
+
+### 12.5 Test 400 - Invalid Email Format
+POST {{baseUrl}}/users/signup
+Content-Type: application/json
+
+{
+  "name": "Test",
+  "email": "invalid-email",
+  "password": "test1234",
+  "passwordConfirm": "test1234"
+}
+
+### 12.6 Test 400 - Password Mismatch
+POST {{baseUrl}}/users/signup
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test2@example.com",
+  "password": "password123",
+  "passwordConfirm": "different456"
+}
+
+### 12.7 Test 404 - Invalid Product ID
+GET {{baseUrl}}/products/000000000000000000000000
+
+### 12.8 Test 400 - Invalid MongoDB ID Format
+GET {{baseUrl}}/products/invalid-id
+
+
+###############################################################################
+# 13. HEALTH CHECK & INFO
+###############################################################################
+
+### 13.1 API Base URL (Should return 404 with proper JSON)
+GET {{baseUrl}}
+
+### 13.2 Root URL
+GET http://localhost:3000/
+
+
+###############################################################################
+# 14. WORKFLOW EXAMPLES
+###############################################################################
+
+### WORKFLOW 1: Complete User Registration & Order Flow
+###
+### Step 1: Sign Up
+### Step 2: Login (copy token)
+### Step 3: Browse products
+### Step 4: Create order
+### Step 5: Track order
+### Step 6: Create review
+
+### WORKFLOW 2: Guest Checkout
+###
+### Step 1: Browse products (no auth)
+### Step 2: Create order as guest
+### Step 3: Track order (no auth)
+### Step 4: Sign up with same email (converts guest)
+### Step 5: View order in "my orders"
+
+### WORKFLOW 3: Admin Product Management
+###
+### Step 1: Login as admin
+### Step 2: Create product
+### Step 3: Upload images
+### Step 4: View stats
+### Step 5: Update product
+### Step 6: Manage orders
+
+
+###############################################################################
+# NOTES & TIPS
+###############################################################################
+
+# 1. Always update @authToken after logging in
+# 2. Update @productId after creating/getting a product
+# 3. Update @orderId and @orderNumber after creating an order
+# 4. For multipart/form-data, adjust file paths to your actual images
+# 5. Click "Send Request" text above each request to execute
+# 6. Use Ctrl+Alt+E (or Cmd+Alt+E on Mac) to switch environments
+# 7. Results appear in a separate panel on the right
+
+# MONGODB ID FORMAT: 24 hexadecimal characters
+# ORDER NUMBER FORMAT: EXC-YYYYMMDD-XXXX
+
+###############################################################################
+# QUICK REFERENCE - HTTP STATUS CODES
+###############################################################################
+
+# 200 - OK (Success)
+# 201 - Created
+# 204 - No Content (Successful deletion)
+# 400 - Bad Request (Validation error)
+# 401 - Unauthorized (Not logged in)
+# 403 - Forbidden (Insufficient permissions)
+# 404 - Not Found
+# 500 - Internal Server Error
+
+###############################################################################
