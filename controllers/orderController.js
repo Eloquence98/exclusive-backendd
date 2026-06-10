@@ -277,6 +277,65 @@ exports.trackOrder = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.cancelOrder = catchAsync(async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const order = await Order.findById(req.params.id).session(session);
+
+    if (!order) {
+      await session.abortTransaction();
+      return next(new AppError('Order not found', 404));
+    }
+
+    // Check ownership (unless admin)
+    if (req.user.role !== 'admin' && order.user.toString() !== req.user.id) {
+      await session.abortTransaction();
+      return next(new AppError('You can only cancel your own orders', 403));
+    }
+
+    // Only allow cancellation for early statuses
+    if (!['processing', 'confirmed'].includes(order.orderStatus)) {
+      await session.abortTransaction();
+      return next(
+        new AppError(
+          `Cannot cancel order with status: ${order.orderStatus}`,
+          400,
+        ),
+      );
+    }
+
+    // Restore stock
+    await Promise.all(
+      order.products.map((item) =>
+        Product.findByIdAndUpdate(
+          item.product,
+          { $inc: { stock: item.quantity } },
+          { session },
+        ),
+      ),
+    );
+
+    // Update order
+    order.orderStatus = 'cancelled';
+    order.statusManuallyUpdated = true;
+    await order.save({ session });
+
+    await session.commitTransaction();
+
+    res.status(200).json({
+      status: 'success',
+      data: { order },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    return next(error);
+  } finally {
+    session.endSession();
+  }
+});
+
 // Use factory functions for standard CRUD operations
 exports.getAllOrders = factory.getAll(Order);
 exports.getOrder = factory.getOne(Order);

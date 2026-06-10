@@ -30,6 +30,7 @@ router.get(
   orderController.aliasRecentOrders,
   orderController.getMyOrders,
 );
+router.patch('/:id/cancel', orderController.cancelOrder);
 
 // Admin routes
 router.use(authController.restrictTo('admin'));
