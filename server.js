@@ -1,5 +1,7 @@
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
 const { logger } = require('./utils/logger');
 const scheduleSaleCleanup = require('./lib/cornJobs/saleCleanup');
 const processOrders = require('./lib/cornJobs/orderProcessing');
@@ -10,6 +12,21 @@ dotenv.config();
 const activeJobs = {
   saleCleanup: null,
   orderProcessing: null,
+};
+
+//
+const ensureDirectories = () => {
+  const dirs = [
+    path.join(__dirname, 'public', 'img', 'products'),
+    path.join(__dirname, 'public', 'img', 'users'),
+  ];
+
+  dirs.forEach((dir) => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      logger.info(`Created directory: ${dir}`);
+    }
+  });
 };
 
 // Initialize cron jobs
@@ -75,6 +92,8 @@ const shutdown = async (exitCode = 0, signal = '') => {
     }
   });
 };
+
+ensureDirectories();
 
 // Database connection
 const { uri, options } = getDbConfig();
