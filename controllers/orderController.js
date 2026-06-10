@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const catchAsync = require('../utils/catchAsync');
@@ -74,66 +75,92 @@ const validateAndGetProducts = async (products) => {
 
 // Create order
 exports.createOrder = catchAsync(async (req, res, next) => {
-  // 1) Ensure we have a user (either authenticated or guest)
-  if (!req.user) {
-    return next(
-      new AppError('User information is required to create an order', 400),
-    );
-  }
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // 2) Validate and get product details
-  const products = await validateAndGetProducts(req.body.products);
-
-  // 🔧 TODO: Reduce stock for each product
-
-  // 3) Calculate order amounts
-  const { subtotal, shippingCost, totalAmount } =
-    calculateOrderAmounts(products);
-
-  // 4) Create order
-  const order = await Order.create({
-    user: req.user._id,
-    products,
-    subtotal,
-    shippingCost,
-    totalAmount,
-    shippingAddress: req.body.shippingAddress,
-    paymentMethod: 'cash_on_delivery',
-    paymentStatus: 'pending',
-  });
-
-  // 5) Send order confirmation email
   try {
-    const url = `${process.env.FRONTEND_URL}/orders/${order.orderNumber}`;
-    await new Email(req.user, url).sendOrderConfirmation(order);
-    logger.info('Order confirmation email sent successfully', {
-      orderId: order._id,
-      orderNumber: order.orderNumber,
-      userId: req.user._id,
-      email: req.user.email,
-    });
-  } catch (err) {
-    logger.error('Failed to send order confirmation email:', {
-      orderId: order._id,
-      orderNumber: order.orderNumber,
-      userId: req.user._id,
-      email: req.user.email,
-      error: err.message,
-      stack: err.stack,
-    });
-    // Don't throw the error - we want the order to succeed even if email fails
-  }
+    // 1) Ensure we have a user
+    if (!req.user) {
+      await session.abortTransaction();
+      return next(new AppError('User information is required', 400));
+    }
 
-  // 6) Send response
-  res.status(201).json({
-    status: 'success',
-    data: {
-      orderNumber: order.orderNumber,
-      totalAmount: order.totalAmount,
-      orderStatus: order.orderStatus,
-      createdAt: order.createdAt,
-    },
-  });
+    // 2) Validate and get product details
+    const products = await validateAndGetProducts(req.body.products);
+
+    // 3) Calculate amounts
+    const { subtotal, shippingCost, totalAmount } =
+      calculateOrderAmounts(products);
+
+    // 4) Reduce stock atomically
+    await Promise.all(
+      products.map(async (item) => {
+        const product = await Product.findById(item.product).session(session);
+
+        if (product.stock < item.quantity) {
+          throw new AppError(
+            `Insufficient stock for ${product.title}. Only ${product.stock} available.`,
+            400,
+          );
+        }
+
+        return Product.findByIdAndUpdate(
+          item.product,
+          { $inc: { stock: -item.quantity } },
+          { new: true, session },
+        );
+      }),
+    );
+
+    // 5) Create order
+    const [order] = await Order.create(
+      [
+        {
+          user: req.user._id,
+          products,
+          subtotal,
+          shippingCost,
+          totalAmount,
+          shippingAddress: req.body.shippingAddress,
+          paymentMethod: 'cash_on_delivery',
+          paymentStatus: 'pending',
+        },
+      ],
+      { session },
+    );
+
+    // 6) Commit transaction
+    await session.commitTransaction();
+
+    // 7) Send email (outside transaction to avoid rollback on email failure)
+    try {
+      const url = `${process.env.FRONTEND_URL}/orders/${order.orderNumber}`;
+      await new Email(req.user, url).sendOrderConfirmation(order);
+      logger.info('Order confirmation email sent', {
+        orderId: order._id,
+        email: req.user.email,
+      });
+    } catch (emailErr) {
+      logger.error('Email failed but order succeeded:', emailErr);
+      // Don't fail the order if email fails
+    }
+
+    // 8) Send response
+    res.status(201).json({
+      status: 'success',
+      data: {
+        orderNumber: order.orderNumber,
+        totalAmount: order.totalAmount,
+        orderStatus: order.orderStatus,
+        createdAt: order.createdAt,
+      },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    return next(error);
+  } finally {
+    session.endSession();
+  }
 });
 
 // Statistics Controllers
