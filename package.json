@@ -13,7 +13,10 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "docker:dev": "cross-env TARGET=dev docker-compose up --build -d",
-    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d"
+    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d",
+    "seed:import": "node dev-data/data/import-dev-data.js --import",
+    "seed:delete": "node dev-data/data/import-dev-data.js --delete",
+    "seed:reset": "node dev-data/data/import-dev-data.js --reset"
   },
   "author": "Eloquence98",
   "license": "ISC",
