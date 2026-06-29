@@ -17,6 +17,9 @@ services:
     env_file: .env
     depends_on:
       - mongo
+    # Only start API if explicitly requested
+    profiles:
+      - full-stack
 
   mongo:
     image: mongo:latest
