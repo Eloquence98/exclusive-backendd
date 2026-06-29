@@ -57,7 +57,16 @@ const getDbConfig = () => {
     w: 'majority',
   };
 
-  // Prefer MONGODB_URI if set, otherwise fall back to ME_CONFIG_MONGODB_URL
+  /**
+   * MongoDB URI Priority:
+   *
+   * DEVELOPMENT:
+   * - Running API on host + MongoDB in Docker: Use MONGODB_URI (mongodb://localhost:27017)
+   * - Running full stack in Docker: Use ME_CONFIG_MONGODB_URL (mongodb://mongo:27017)
+   *
+   * PRODUCTION:
+   * - Use MONGODB_URI with cloud provider (MongoDB Atlas, Railway, etc.)
+   */
   return {
     uri: process.env.MONGODB_URI || process.env.ME_CONFIG_MONGODB_URL,
     options,
