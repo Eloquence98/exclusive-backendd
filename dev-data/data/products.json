@@ -812,7 +812,7 @@
     "isFeatured": false,
     "ratingsAverage": 3.5,
     "ratingsQuantity": 473,
-    "size": "36"
+    "size": "6XL"
   },
   {
     "title": "Green Straight Leg Denim",
@@ -833,7 +833,7 @@
     "isFeatured": true,
     "ratingsAverage": 3.8,
     "ratingsQuantity": 192,
-    "size": "30"
+    "size": "S"
   },
   {
     "title": "Charcoal Skinny Stretch Jeans",
@@ -856,7 +856,7 @@
     "isFeatured": true,
     "ratingsAverage": 4.7,
     "ratingsQuantity": 271,
-    "size": "28",
+    "size": "L",
     "onSale": true,
     "salePrice": 101.92,
     "discount": 17,
@@ -882,7 +882,7 @@
     "isFeatured": true,
     "ratingsAverage": 4.4,
     "ratingsQuantity": 472,
-    "size": "32",
+    "size": "XXXL",
     "onSale": true,
     "salePrice": 55.1,
     "discount": 29,
@@ -910,7 +910,7 @@
     "isFeatured": true,
     "ratingsAverage": 4.5,
     "ratingsQuantity": 188,
-    "size": "34",
+    "size": "M",
     "onSale": true,
     "salePrice": 62.65,
     "discount": 26,
@@ -938,7 +938,7 @@
     "isFeatured": false,
     "ratingsAverage": 3.6,
     "ratingsQuantity": 178,
-    "size": "28"
+    "size": "M"
   },
   {
     "title": "Olive Boot Cut Classic Jeans",
@@ -961,7 +961,7 @@
     "isFeatured": true,
     "ratingsAverage": 4.4,
     "ratingsQuantity": 237,
-    "size": "34",
+    "size": "XXL",
     "onSale": true,
     "salePrice": 95.74,
     "discount": 11,
@@ -989,7 +989,7 @@
     "isFeatured": false,
     "ratingsAverage": 4.9,
     "ratingsQuantity": 261,
-    "size": "32",
+    "size": "5XL",
     "onSale": true,
     "salePrice": 78.86,
     "discount": 25,
@@ -1017,7 +1017,7 @@
     "isFeatured": false,
     "ratingsAverage": 3.8,
     "ratingsQuantity": 293,
-    "size": "30"
+    "size": "XL"
   },
   {
     "title": "Black Straight Leg Denim",
@@ -1040,7 +1040,7 @@
     "isFeatured": true,
     "ratingsAverage": 4.3,
     "ratingsQuantity": 306,
-    "size": "30"
+    "size": "L"
   },
   {
     "title": "Red Denim Casual Shorts",
@@ -1252,7 +1252,7 @@
     "isFeatured": false,
     "ratingsAverage": 4,
     "ratingsQuantity": 119,
-    "size": "38"
+    "size": "6XL"
   },
   {
     "title": "Navy Pleated Dress Pants",
@@ -1273,7 +1273,7 @@
     "isFeatured": false,
     "ratingsAverage": 4,
     "ratingsQuantity": 156,
-    "size": "36",
+    "size": "L",
     "onSale": true,
     "salePrice": 50.17,
     "discount": 29,
@@ -1299,7 +1299,7 @@
     "isFeatured": false,
     "ratingsAverage": 4.6,
     "ratingsQuantity": 158,
-    "size": "30"
+    "size": "4XL"
   },
   {
     "title": "White Stretch Business Pants",
@@ -1320,7 +1320,7 @@
     "isFeatured": false,
     "ratingsAverage": 4.8,
     "ratingsQuantity": 305,
-    "size": "30",
+    "size": "XXL",
     "onSale": true,
     "salePrice": 61.59,
     "discount": 18,
@@ -1348,7 +1348,7 @@
     "isFeatured": false,
     "ratingsAverage": 3.9,
     "ratingsQuantity": 62,
-    "size": "32",
+    "size": "5XL",
     "onSale": true,
     "salePrice": 67.41,
     "discount": 15,
@@ -1375,7 +1375,7 @@
     "isFeatured": true,
     "ratingsAverage": 4.3,
     "ratingsQuantity": 409,
-    "size": "34",
+    "size": "XXL",
     "onSale": true,
     "salePrice": 64.6,
     "discount": 19,
@@ -1403,7 +1403,7 @@
     "isFeatured": false,
     "ratingsAverage": 3.5,
     "ratingsQuantity": 189,
-    "size": "30"
+    "size": "S"
   },
   {
     "title": "Brown Tailored Fit Trousers",
@@ -1426,7 +1426,7 @@
     "isFeatured": true,
     "ratingsAverage": 4.3,
     "ratingsQuantity": 175,
-    "size": "32"
+    "size": "XL"
   },
   {
     "title": "Navy Casual Comfort Trousers",
@@ -1449,7 +1449,7 @@
     "isFeatured": false,
     "ratingsAverage": 4.2,
     "ratingsQuantity": 378,
-    "size": "38",
+    "size": "M",
     "onSale": true,
     "salePrice": 68.73,
     "discount": 19,
@@ -1477,7 +1477,7 @@
     "isFeatured": false,
     "ratingsAverage": 4.7,
     "ratingsQuantity": 209,
-    "size": "34",
+    "size": "5XL",
     "onSale": true,
     "salePrice": 45.77,
     "discount": 11,
