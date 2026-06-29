@@ -12,13 +12,7 @@
     "copy:email-templates": "copyfiles -u 1 \"views/email/**/*\" dist/views/email",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "docker:mongo": "docker-compose up mongo mongo-express -d",
-    "docker:dev": "docker-compose --profile full-stack up --build",
-    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d",
-    "docker:stop": "docker-compose down",
-    "seed:import": "node dev-data/data/import-dev-data.js --import",
-    "seed:delete": "node dev-data/data/import-dev-data.js --delete",
-    "seed:reset": "node dev-data/data/import-dev-data.js --reset"
+    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d"
   },
   "author": "Eloquence98",
   "license": "ISC",
