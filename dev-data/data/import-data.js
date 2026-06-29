@@ -18,6 +18,7 @@ const getDbConfig = () => {
     dbName: process.env.DB_NAME || 'exclusive',
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 30000,
+    replicaSet: 'rs0',
   };
 
   // Priority: MONGODB_URI (localhost) > ME_CONFIG_MONGODB_URL (docker)
