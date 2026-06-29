@@ -55,6 +55,7 @@ const getDbConfig = () => {
     socketTimeoutMS: 30000,
     retryWrites: true,
     w: 'majority',
+    replicaSet: 'rs0',
   };
 
   /**
