@@ -47,33 +47,6 @@ const initializeJobs = () => {
 // Initialize application
 const app = require('./app');
 
-// Database configuration
-const getDbConfig = () => {
-  const options = {
-    dbName: process.env.DB_NAME,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 30000,
-    retryWrites: true,
-    w: 'majority',
-    replicaSet: 'rs0',
-  };
-
-  /**
-   * MongoDB URI Priority:
-   *
-   * DEVELOPMENT:
-   * - Running API on host + MongoDB in Docker: Use MONGODB_URI (mongodb://localhost:27017)
-   * - Running full stack in Docker: Use ME_CONFIG_MONGODB_URL (mongodb://mongo:27017)
-   *
-   * PRODUCTION:
-   * - Use MONGODB_URI with cloud provider (MongoDB Atlas, Railway, etc.)
-   */
-  return {
-    uri: process.env.MONGODB_URI || process.env.ME_CONFIG_MONGODB_URL,
-    options,
-  };
-};
-
 // Start server
 const port = process.env.PORT || 3000;
 const server = app.listen(port, () => {
@@ -105,16 +78,11 @@ const shutdown = async (exitCode = 0, signal = '') => {
 
 ensureDirectories();
 
-// Database connection
-const { uri, options } = getDbConfig();
-
-if (!uri) {
-  logger.error('No MongoDB connection URI found in environment variables');
-  process.exit(1);
-}
-
 mongoose
-  .connect(uri, options)
+  .connect(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 30000,
+  })
   .then(() => {
     logger.info('DB connection successful!');
     initializeJobs();
@@ -123,7 +91,6 @@ mongoose
     logger.error('DB connection failed:', {
       error: err.message,
       stack: err.stack,
-      uri: uri.replace(/\/\/[^@]+@/, '//***:***@'), // Mask credentials in logs
     });
     shutdown(1);
   });
