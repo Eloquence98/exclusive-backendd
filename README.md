@@ -51,10 +51,10 @@ No need to install MongoDB - it runs in a container!
    # Add the following variables (replace values as needed)
    NODE_ENV=development
    PORT=3000
-   DB_NAME=exclusive
-   JWT_SECRET=your_secret_key_here_min_32_chars_long
-   JWT_EXPIRES_IN=90d
-   JWT_COOKIE_EXPIRES_IN=90
+   DB_NAME=db_name
+   JWT_SECRET=your_secret_key_here
+   JWT_EXPIRES_IN=7d
+   JWT_COOKIE_EXPIRES_IN=7
    FRONTEND_URL=http://localhost:3000
 
    # Mailtrap credentials (for email testing)
@@ -62,7 +62,7 @@ No need to install MongoDB - it runs in a container!
    EMAIL_PORT=2525
    EMAIL_USERNAME=your_mailtrap_username
    EMAIL_PASSWORD=your_mailtrap_password
-   EMAIL_FROM=noreply@exclusive.com
+   EMAIL_FROM=noreply@yourbrand.com
    ```
 
 3. **Start the development environment**
