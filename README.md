@@ -1,262 +1,158 @@
-# Exclusive E-commerce Backend API
+# Exclusive Backend
 
-A robust and secure REST API for the Exclusive e-commerce platform, built with Node.js, Express, and MongoDB. Features include user authentication, product management, order processing, and email notifications.
+A production-inspired REST API powering **Exclusive**, a modern e-commerce application built with **Node.js**, **Express**, and **MongoDB**.
 
-## Tech Stack
+The project focuses on building the backend of a real online store—from secure authentication and product management to order processing, reviews, analytics, and automated background jobs. It follows a modular architecture with reusable controllers, centralized error handling, and scalable API design.
 
-- **Runtime**: Node.js (≥14)
-- **Framework**: Express.js
-- **Database**: MongoDB
-- **Email Templates**: Pug
-- **Authentication**: JWT
-- **Container**: Docker
-- **API Testing**: Postman (collection included)
+---
 
-## Prerequisites
+## Features
 
-Choose either Option A or B:
+### User Authentication & Authorization
 
-### Option A: Using npm scripts (Recommended for Development)
+- Secure JWT authentication
+- Protected routes and role-based access control
+- Password reset via email
+- Profile management
+- Guest checkout support
+- Guest account conversion to registered users
 
-- Node.js and npm (for running scripts)
-- Docker and Docker Compose
-- Git
-- A text editor
-- Mailtrap account (for email testing)
+### Product Management
 
-### Option B: Using Docker directly
-
-- Docker and Docker Compose
-- Git
-- A text editor
-- Mailtrap account (for email testing)
-
-No need to install MongoDB - it runs in a container!
-
-## Quick Start
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/Eloquence98/exclusive-backendd.git
-   cd exclusive-backend
-   ```
-
-2. **Create environment file**
-
-   ```bash
-   # Create .env file in the root directory
-   touch .env
-
-   # Add the following variables (replace values as needed)
-   NODE_ENV=development
-   PORT=3000
-   DB_NAME=db_name
-   JWT_SECRET=your_secret_key_here
-   JWT_EXPIRES_IN=7d
-   JWT_COOKIE_EXPIRES_IN=7
-   FRONTEND_URL=http://localhost:3000
-
-   # Mailtrap credentials (for email testing)
-   EMAIL_HOST=smtp.mailtrap.io
-   EMAIL_PORT=2525
-   EMAIL_USERNAME=your_mailtrap_username
-   EMAIL_PASSWORD=your_mailtrap_password
-   EMAIL_FROM=noreply@yourbrand.com
-   ```
-
-3. **Start the development environment**
-
-   Using npm (Option A):
-
-   ```bash
-   npm run docker:dev
-   ```
-
-   Using Docker directly (Option B):
-
-   ```bash
-   # Development mode
-   docker compose up --build -d
-
-   # View logs
-   docker compose logs -f api
-   ```
-
-4. **Import development data**
-
-   Using npm (Option A):
-
-   ```bash
-   npm run data:import
-   ```
-
-   Using Docker directly (Option B):
-
-   ```bash
-   docker compose exec api node dev-data/data/import-dev-data.js --import
-   ```
-
-5. **Verify the setup**
-   - API is running at: http://localhost:3000
-   - MongoDB Express UI: http://localhost:8081
-   - Check container status: `docker compose ps`
-
-## Common Commands
-
-### Using npm (Option A)
-
-```bash
-# Start development environment
-npm run docker:dev
-
-# Start production environment
-npm run docker:prod
-
-# Stop all containers
-npm run docker:down
-
-# Import test data
-npm run data:import
-
-# Delete all data
-npm run data:delete
-```
-
-### Using Docker directly (Option B)
-
-```bash
-# Start development environment
-docker compose up --build -d
-
-# Start production environment
-TARGET=prod docker compose up --build -d
-
-# Stop all containers
-docker compose down -v
-
-# Import test data
-docker compose exec api node dev-data/data/import-dev-data.js --import
-
-# Delete all data
-docker compose exec api node dev-data/data/import-dev-data.js --delete
-```
-
-## Testing the API
-
-1. **Create a new user**
-
-   ```bash
-   curl -X POST http://localhost:3000/api/v1/users/signup \
-   -H "Content-Type: application/json" \
-   -d '{
-     "name": "Test User",
-     "email": "test@example.com",
-     "password": "test1234",
-     "passwordConfirm": "test1234"
-   }'
-   ```
-
-2. **Login**
-
-   ```bash
-   curl -X POST http://localhost:3000/api/v1/users/login \
-   -H "Content-Type: application/json" \
-   -d '{
-     "email": "test@example.com",
-     "password": "test1234"
-   }'
-   ```
-
-3. **View products** (no authentication required)
-   ```bash
-   curl http://localhost:3000/api/v1/products
-   ```
-
-## API Endpoints
-
-### Authentication
-
-- POST `/api/v1/users/signup` - Register new user
-- POST `/api/v1/users/login` - Login user
-- POST `/api/v1/users/forgotPassword` - Request password reset
-- PATCH `/api/v1/users/resetPassword/:token` - Reset password
-
-### Products
-
-- GET `/api/v1/products` - Get all products
-- GET `/api/v1/products/:id` - Get single product
-- POST `/api/v1/products` - Create product (Admin)
-- PATCH `/api/v1/products/:id` - Update product (Admin)
-- DELETE `/api/v1/products/:id` - Delete product (Admin)
+- Full CRUD operations for products
+- Product image upload and automatic resizing
+- Featured, trending, and category-based products
+- Slug-based product URLs
+- Inventory tracking and sales insights
 
 ### Orders
 
-- POST `/api/v1/orders` - Create order
-- GET `/api/v1/orders` - Get all orders (Admin)
-- GET `/api/v1/orders/:id` - Get single order
-- GET `/api/v1/orders/my-orders` - Get user orders
+- Create and manage customer orders
+- Track order status
+- Cancel eligible orders
+- View personal order history
+- Admin order management
+- Monthly sales and order statistics
 
 ### Reviews
 
-- POST `/api/v1/products/:productId/reviews` - Create review
-- GET `/api/v1/products/:productId/reviews` - Get product reviews
-- PATCH `/api/v1/reviews/:id` - Update review
-- DELETE `/api/v1/reviews/:id` - Delete review
+- Product review system
+- Customer-specific reviews
+- Update and delete reviews
+- Nested review routes
 
-## Development
+### API Features
 
-### Available Scripts
+- Filtering
+- Sorting
+- Pagination
+- Field limiting
+- Search
+- Consistent error handling
+- Reusable CRUD controller factory
 
-- `npm run docker:dev` - Start development environment
-- `npm run docker:prod` - Start production environment
-- `npm run docker:down` - Stop and remove containers
-- `npm run data:import` - Import sample data
-- `npm run data:delete` - Delete all data
+### Background Tasks
 
-### Directory Structure
+- Automated order processing
+- Scheduled sale cleanup jobs
+
+---
+
+## Tech Stack
+
+- Node.js
+- Express.js
+- MongoDB & Mongoose
+- JWT Authentication
+- Multer
+- Sharp
+- Docker & Docker Compose
+- Pug (Email Templates)
+
+---
+
+## Project Structure
 
 ```
-exclusive-backend/
-├── controllers/     # Route controllers
-├── models/         # Database models
-├── routes/         # API routes
-├── utils/          # Utility functions
-├── views/          # Email templates
-├── dev-data/       # Sample data
-└── docker/         # Docker configuration
+controllers/
+models/
+routes/
+utils/
+lib/
+dev-data/
 ```
 
-## Stopping the Application
+The application follows a layered architecture where routes delegate requests to controllers, controllers interact with Mongoose models, and shared utilities provide reusable functionality such as filtering, authentication, logging, email handling, and error management.
+
+---
+
+## Getting Started
+
+### Clone the repository
 
 ```bash
-npm run docker:down
+git clone https://github.com/Eloquence98/exclusive-backendd.git
+cd exclusive-backendd
 ```
 
-## Troubleshooting
+### Configure environment variables
 
-1. **Containers not starting**
+Create a `.env` file in the project root and provide the required configuration such as:
 
-   - Check Docker daemon is running
-   - Ensure ports 3000, 27017, and 8081 are free
-   - View logs: `docker compose logs`
+- Database connection
+- JWT secrets
+- Email credentials
+- Frontend URL
+- Application port
 
-2. **Email not working**
+### Start the application
 
-   - Verify Mailtrap credentials in .env
-   - Check email logs in container
+```bash
+docker compose up --build
+```
 
-3. **Database issues**
-   - Access Mongo Express UI at http://localhost:8081
-   - Check MongoDB logs: `docker compose logs mongo`
+### Seed development data (optional)
 
-## Contributing
+```bash
+docker compose exec api node dev-data/data/import-dev-data.js --import
+```
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+The API will then be available locally.
+
+---
+
+## API Overview
+
+The backend exposes REST endpoints for:
+
+- Authentication
+- Users
+- Products
+- Orders
+- Reviews
+
+It also includes administrative endpoints for inventory management, analytics, reporting, and order administration.
+
+---
+
+## Why I Built This
+
+This project was built to explore how a production-style e-commerce backend is structured beyond simple CRUD applications.
+
+While building it, I focused on writing modular, maintainable code by separating responsibilities across controllers, models, middleware, and utilities. The project also introduced concepts such as reusable controller factories, image processing, scheduled background jobs, authentication flows, and analytics endpoints that are commonly found in real-world backend systems.
+
+---
+
+## Future Improvements
+
+- Payment gateway integration
+- API documentation with Swagger/OpenAPI
+- Automated test suite
+- Caching layer
+- Rate limiting enhancements
+- CI/CD pipeline
+
+---
 
 ## License
 
