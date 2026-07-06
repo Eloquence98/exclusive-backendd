@@ -12,37 +12,14 @@ const Order = require('../../models/orderModel');
 
 dotenv.config();
 
-// Database configuration
-const getDbConfig = () => {
-  const options = {
-    dbName: process.env.DB_NAME || 'exclusive',
+mongoose
+  .connect(process.env.MONGODB_URI, {
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 30000,
-    replicaSet: 'rs0',
-  };
-
-  // Priority: MONGODB_URI (localhost) > ME_CONFIG_MONGODB_URL (docker)
-  let uri = process.env.MONGODB_URI || process.env.ME_CONFIG_MONGODB_URL;
-
-  // If no URI found, use default localhost
-  if (!uri) {
-    uri = 'mongodb://localhost:27017';
-    console.log(
-      '⚠️  No MongoDB URI found, using default: mongodb://localhost:27017',
-    );
-  }
-
-  return { uri, options };
-};
-
-// Connect to database
-const { uri, options } = getDbConfig();
-
-console.log(`🔌 Connecting to: ${uri.replace(/\/\/[^@]+@/, '//***:***@')}`);
-
-mongoose
-  .connect(uri, options)
-  .then(() => console.log('✅ DB connection successful!'))
+  })
+  .then(() => {
+    console.log('✅ DB connection successful!');
+  })
   .catch((err) => {
     console.error('❌ DB connection failed:', err.message);
     console.error('\n💡 Troubleshooting:');

@@ -370,6 +370,7 @@ async function generateProduct(category, index, downloadImages = true) {
 
   // Download images if enabled
   let imageCover = 'default-product.jpg';
+  // eslint-disable-next-line prefer-const
   let images = [];
 
   if (downloadImages) {
