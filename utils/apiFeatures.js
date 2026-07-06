@@ -52,6 +52,13 @@ class APIFeatures {
 
     return this;
   }
+
+  getPaginationParams() {
+    return {
+      page: this.queryString.page * 1 || 1,
+      limit: this.queryString.limit * 1 || 100,
+    };
+  }
 }
 
 module.exports = APIFeatures;

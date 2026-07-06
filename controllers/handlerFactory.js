@@ -62,12 +62,31 @@ exports.getAll = (Model) =>
       .sort()
       .limitFields()
       .paginate();
-    // const doc = await features.query.explain();
-    const doc = await features.query;
+
+    const { page, limit } = features.getPaginationParams();
+
+    const [docs, totalDocuments] = await Promise.all([
+      features.query,
+      Model.countDocuments(features.query.getFilter()),
+    ]);
+
+    const totalPages = Math.ceil(totalDocuments / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
 
     res.status(200).json({
       status: 'success',
-      results: doc.length,
-      data: { data: doc },
+      results: docs.length,
+      meta: {
+        pagination: {
+          page,
+          limit,
+          totalDocuments,
+          totalPages,
+          hasNextPage,
+          hasPrevPage,
+        },
+      },
+      data: { data: docs },
     });
   });

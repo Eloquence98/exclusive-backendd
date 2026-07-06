@@ -231,14 +231,29 @@ exports.getMyOrders = catchAsync(async (req, res, next) => {
     .limitFields()
     .paginate();
 
-  const orders = await features.query;
+  const { page, limit } = features.getPaginationParams();
+
+  const [orders, totalDocuments] = await Promise.all([
+    features.query,
+    Order.countDocuments(features.query.getFilter()),
+  ]);
+
+  const totalPages = Math.ceil(totalDocuments / limit);
 
   res.status(200).json({
     status: 'success',
     results: orders.length,
-    data: {
-      orders,
+    meta: {
+      pagination: {
+        page,
+        limit,
+        totalDocuments,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     },
+    data: { orders },
   });
 });
 
