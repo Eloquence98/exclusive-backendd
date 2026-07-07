@@ -34,6 +34,8 @@ router
     productController.getAllProducts,
   );
 
+router.route('/stats').get(productController.getPublicProductStats);
+
 // Statistics Routes
 router
   .route('/product-stats')

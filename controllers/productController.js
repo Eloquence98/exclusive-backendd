@@ -49,6 +49,84 @@ exports.aliasCategory = (req, res, next) => {
   next();
 };
 
+// Public stats for building frontend filters (price sliders, category lists, etc.)
+exports.getPublicProductStats = catchAsync(async (req, res, next) => {
+  const stats = await Product.aggregate([
+    // Only active, non-deleted products
+    {
+      $match: { isDeleted: { $ne: true }, isActive: true },
+    },
+    {
+      $facet: {
+        // Overall price range for price slider
+        priceRange: [
+          {
+            $group: {
+              _id: null,
+              minPrice: { $min: '$price' },
+              maxPrice: { $max: '$price' },
+            },
+          },
+          { $project: { _id: 0, minPrice: 1, maxPrice: 1 } },
+        ],
+
+        // Categories with product counts
+        categories: [
+          {
+            $group: {
+              _id: '$category',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $project: { _id: 0, name: '$_id', count: 1 } },
+        ],
+
+        // Available brands
+        brands: [
+          { $match: { brand: { $ne: null } } },
+          {
+            $group: {
+              _id: '$brand',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { count: -1 } },
+          { $project: { _id: 0, name: '$_id', count: 1 } },
+        ],
+
+        // Available sizes
+        sizes: [
+          { $match: { size: { $ne: null } } },
+          {
+            $group: {
+              _id: '$size',
+              count: { $sum: 1 },
+            },
+          },
+          { $project: { _id: 0, name: '$_id', count: 1 } },
+        ],
+
+        // Total product count
+        totalProducts: [{ $count: 'count' }],
+      },
+    },
+  ]);
+
+  const result = stats[0];
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      priceRange: result.priceRange[0] || { minPrice: 0, maxPrice: 0 },
+      totalProducts: result.totalProducts[0]?.count || 0,
+      categories: result.categories,
+      brands: result.brands,
+      sizes: result.sizes,
+    },
+  });
+});
+
 // Statistics Controllers
 exports.getProductStats = catchAsync(async (req, res, next) => {
   const stats = await Product.aggregate([
