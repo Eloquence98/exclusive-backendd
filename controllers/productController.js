@@ -4,6 +4,7 @@ const Product = require('../models/productModel');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
 const AppError = require('../utils/appError');
+const { logger } = require('../utils/logger');
 
 // 1) Image upload setup
 const multerStorage = multer.memoryStorage();
@@ -51,6 +52,9 @@ exports.aliasCategory = (req, res, next) => {
 
 // Public stats for building frontend filters (price sliders, category lists, etc.)
 exports.getPublicProductStats = catchAsync(async (req, res, next) => {
+  logger.info(
+    `getPublicProductStats hit | url=${req.originalUrl} | query=${JSON.stringify(req.query)}`,
+  );
   const stats = await Product.aggregate([
     // Only active, non-deleted products
     {
@@ -279,6 +283,9 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
 
 // Get product by slug
 exports.getProductBySlug = catchAsync(async (req, res, next) => {
+  logger.info(
+    `getProductBySlug hit | slug=${req.params.slug} | url=${req.originalUrl}`,
+  );
   const product = await Product.findOne({ slug: req.params.slug }).populate({
     path: 'reviews',
     fields: 'review rating user',
@@ -296,6 +303,9 @@ exports.getProductBySlug = catchAsync(async (req, res, next) => {
 
 // Search products - public route
 exports.searchProducts = catchAsync(async (req, res, next) => {
+  logger.info(
+    `searchProducts hit | url=${req.originalUrl} | query=${JSON.stringify(req.query)}`,
+  );
   const { q, category, minPrice, maxPrice, onSale } = req.query;
 
   // Validate search query
