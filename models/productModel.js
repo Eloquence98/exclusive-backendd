@@ -159,6 +159,14 @@ const productSchema = new mongoose.Schema(
 // Indexes
 productSchema.index({ price: 1, discount: -1 });
 productSchema.index({ slug: 1 });
+// Search index
+productSchema.index({
+  title: 'text',
+  description: 'text',
+  brand: 'text',
+  category: 'text',
+  tags: 'text',
+});
 
 // Virtuals
 productSchema.virtual('currentPrice').get(function () {

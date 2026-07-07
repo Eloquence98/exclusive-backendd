@@ -35,6 +35,8 @@ router
   );
 
 router.route('/stats').get(productController.getPublicProductStats);
+// ===== SEARCH ROUTE =====
+router.route('/search').get(productController.searchProducts);
 
 // Statistics Routes
 router

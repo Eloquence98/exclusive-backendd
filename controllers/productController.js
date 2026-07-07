@@ -119,7 +119,10 @@ exports.getPublicProductStats = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       priceRange: result.priceRange[0] || { minPrice: 0, maxPrice: 0 },
-      totalProducts: result.totalProducts[0]?.count || 0,
+      totalProducts:
+        result.totalProducts[0] && result.totalProducts[0].count
+          ? result.totalProducts[0].count
+          : 0,
       categories: result.categories,
       brands: result.brands,
       sizes: result.sizes,
@@ -274,13 +277,6 @@ exports.resizeProductImages = catchAsync(async (req, res, next) => {
   next();
 });
 
-// CRUD operations using factory
-exports.getAllProducts = factory.getAll(Product);
-exports.getProduct = factory.getOne(Product, { path: 'reviews' });
-exports.createProduct = factory.createOne(Product);
-exports.updateProduct = factory.updateOne(Product);
-exports.deleteProduct = factory.deleteOne(Product);
-
 // Get product by slug
 exports.getProductBySlug = catchAsync(async (req, res, next) => {
   const product = await Product.findOne({ slug: req.params.slug }).populate({
@@ -297,3 +293,54 @@ exports.getProductBySlug = catchAsync(async (req, res, next) => {
     data: { data: product },
   });
 });
+
+// Search products - public route
+exports.searchProducts = catchAsync(async (req, res, next) => {
+  const { q, category, minPrice, maxPrice, onSale } = req.query;
+
+  // Validate search query
+  if (!q || q.trim().length < 2) {
+    return next(
+      new AppError('Search query must be at least 2 characters', 400),
+    );
+  }
+
+  // Build match conditions
+  const matchConditions = {
+    $text: { $search: q },
+  };
+
+  // Optional filters
+  if (category) matchConditions.category = category;
+  if (onSale === 'true') matchConditions.onSale = true;
+  if (minPrice || maxPrice) {
+    matchConditions.price = {};
+    if (minPrice) matchConditions.price.$gte = parseFloat(minPrice);
+    if (maxPrice) matchConditions.price.$lte = parseFloat(maxPrice);
+  }
+
+  // Execute search with relevance score
+  const products = await Product.find(matchConditions, {
+    score: { $meta: 'textScore' }, // Relevance score
+  })
+    .select(
+      'title slug price salePrice currentPrice onSale saleStatus imageCover category stock isFeatured ratingsAverage ratingsQuantity discount discountPercentage',
+    )
+    .sort({ score: { $meta: 'textScore' } }) // Sort by relevance
+    .limit(50); // Limit search results
+
+  res.status(200).json({
+    status: 'success',
+    results: products.length,
+    data: {
+      data: products,
+    },
+  });
+});
+
+// CRUD operations using factory
+exports.getAllProducts = factory.getAll(Product);
+exports.getProduct = factory.getOne(Product, { path: 'reviews' });
+exports.createProduct = factory.createOne(Product);
+exports.updateProduct = factory.updateOne(Product);
+exports.deleteProduct = factory.deleteOne(Product);
