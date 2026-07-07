@@ -9,7 +9,8 @@ const router = express.Router();
 // GET /products/:productId/reviews
 router.use('/:productId/reviews', reviewRouter);
 
-// Top Products Routes
+router.route('/stats').get(productController.getPublicProductStats);
+router.route('/search').get(productController.searchProducts);
 router
   .route('/top-rated')
   .get(
@@ -33,10 +34,6 @@ router
     productController.aliasFeatured,
     productController.getAllProducts,
   );
-
-router.route('/stats').get(productController.getPublicProductStats);
-// ===== SEARCH ROUTE =====
-router.route('/search').get(productController.searchProducts);
 
 // Statistics Routes
 router
