@@ -15,32 +15,25 @@ const multerFilter = (req, file, cb) => {
 
 const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
 
-// Default fields middleware
-exports.aliasDefaultFields =
-  (additionalFields = '') =>
-  (req, res, next) => {
-    const defaultFields =
-      'title,price,salePrice,currentPrice,imageCover,category,ratingsAverage,ratingsQuantity,slug,onSale,saleStatus,stock,isFeatured';
-    req.query.fields = additionalFields
-      ? `${defaultFields},${additionalFields}`
-      : defaultFields;
-    next();
-  };
+const PRODUCT_SUMMARY_FIELDS =
+  'title,slug,price,salePrice,currentPrice,discount,discountPercentage,onSale,saleStatus,imageCover,category,stock,isFeatured,ratingsAverage,ratingsQuantity';
+
+// CENTRALIZED: ProductSummary fields for ALL list routes
+exports.aliasProductSummary = (req, res, next) => {
+  req.query.fields = PRODUCT_SUMMARY_FIELDS;
+  next();
+};
 
 // Alias Routes Middleware
 exports.aliasTopRated = (req, res, next) => {
   req.query.limit = '5';
   req.query.sort = '-ratingsAverage,price';
-  req.query.fields =
-    'title,price,currentPrice,ratingsAverage,category,imageCover,slug';
   next();
 };
 
 exports.aliasTrending = (req, res, next) => {
   req.query.limit = '5';
   req.query.sort = '-ratingsQuantity,-ratingsAverage';
-  req.query.fields =
-    'title,price,currentPrice,ratingsAverage,ratingsQuantity,category,imageCover,slug';
   next();
 };
 
@@ -223,6 +216,6 @@ exports.getProductBySlug = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { product },
+    data: { data: product },
   });
 });

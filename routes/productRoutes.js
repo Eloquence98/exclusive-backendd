@@ -12,16 +12,24 @@ router.use('/:productId/reviews', reviewRouter);
 // Top Products Routes
 router
   .route('/top-rated')
-  .get(productController.aliasTopRated, productController.getAllProducts);
+  .get(
+    productController.aliasProductSummary,
+    productController.aliasTopRated,
+    productController.getAllProducts,
+  );
 
 router
   .route('/trending')
-  .get(productController.aliasTrending, productController.getAllProducts);
+  .get(
+    productController.aliasProductSummary,
+    productController.aliasTrending,
+    productController.getAllProducts,
+  );
 
 router
   .route('/featured')
   .get(
-    productController.aliasDefaultFields(),
+    productController.aliasProductSummary,
     productController.aliasFeatured,
     productController.getAllProducts,
   );
@@ -52,10 +60,11 @@ router
   );
 
 // Category Routes
+// Category Routes
 router
   .route('/category/:category')
   .get(
-    productController.aliasDefaultFields(),
+    productController.aliasProductSummary,
     productController.aliasCategory,
     productController.getAllProducts,
   );
@@ -71,7 +80,7 @@ router
 // Regular Routes
 router
   .route('/')
-  .get(productController.aliasDefaultFields(), productController.getAllProducts)
+  .get(productController.aliasProductSummary, productController.getAllProducts)
   .post(
     authController.protect,
     authController.restrictTo('admin'),
