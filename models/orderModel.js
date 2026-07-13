@@ -75,31 +75,6 @@ const orderSchema = new mongoose.Schema(
   },
 );
 
-// Order number generation (unchanged)
-orderSchema.pre('validate', async function (next) {
-  if (!this.orderNumber) {
-    const date = new Date();
-    const dateStr =
-      date.getFullYear() +
-      String(date.getMonth() + 1).padStart(2, '0') +
-      String(date.getDate()).padStart(2, '0');
-
-    const latestOrder = await this.constructor
-      .findOne({ orderNumber: new RegExp(`EXC-${dateStr}-`) })
-      .sort({ orderNumber: -1 });
-
-    const sequence = latestOrder
-      ? String(parseInt(latestOrder.orderNumber.slice(-4), 10) + 1).padStart(
-          4,
-          '0',
-        )
-      : '0001';
-
-    this.orderNumber = `EXC-${dateStr}-${sequence}`;
-  }
-  next();
-});
-
 // Calculate estimated times for each status
 orderSchema.methods.calculateEstimatedTimes = function () {
   const now = new Date();

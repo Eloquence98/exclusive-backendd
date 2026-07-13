@@ -7,6 +7,7 @@ const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 const Email = require('../utils/email');
 const { logger } = require('../utils/logger');
+const Counter = require('../models/counterModel');
 
 // Alias Routes Middleware
 exports.aliasDefaultFields = (req, res, next) => {
@@ -32,6 +33,28 @@ exports.aliasTrackOrder = (req, res, next) => {
   req.query.fields =
     'orderNumber,orderStatus,statusHistory.status,statusHistory.timestamp,statusHistory.note,shippingAddress.name';
   next();
+};
+
+const generateOrderNumber = async (session) => {
+  const now = new Date();
+
+  const dateStr = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('');
+
+  const counter = await Counter.findOneAndUpdate(
+    { _id: `orders-${dateStr}` },
+    { $inc: { seq: 1 } },
+    {
+      new: true, // Return the incremented value
+      upsert: true, // Create today's counter if it doesn't exist
+      session, // Make it part of the transaction
+    },
+  );
+
+  return `EXC-${dateStr}-${String(counter.seq).padStart(4, '0')}`;
 };
 
 // Utility Functions
@@ -92,7 +115,10 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     const { subtotal, shippingCost, totalAmount } =
       calculateOrderAmounts(products);
 
-    // 4) Reduce stock atomically
+    // 4) Generate order number
+    const orderNumber = await generateOrderNumber(session);
+
+    // 5) Reduce stock atomically
     await Promise.all(
       products.map(async (item) => {
         const product = await Product.findById(item.product).session(session);
@@ -112,11 +138,12 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       }),
     );
 
-    // 5) Create order
+    // 6) Create order with the generated orderNumber
     const [order] = await Order.create(
       [
         {
           user: req.user._id,
+          orderNumber,
           products,
           subtotal,
           shippingCost,
@@ -124,15 +151,16 @@ exports.createOrder = catchAsync(async (req, res, next) => {
           shippingAddress: req.body.shippingAddress,
           paymentMethod: 'cash_on_delivery',
           paymentStatus: 'pending',
+          orderStatus: 'pending', // Ensure status is set
         },
       ],
       { session },
     );
 
-    // 6) Commit transaction
+    // 7) Commit transaction
     await session.commitTransaction();
 
-    // 7) Send email (outside transaction to avoid rollback on email failure)
+    // 8) Send email (outside transaction to avoid rollback on email failure)
     try {
       const url = `${process.env.FRONTEND_URL}/orders/${order.orderNumber}`;
       await new Email(req.user, url).sendOrderConfirmation(order);
@@ -145,7 +173,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       // Don't fail the order if email fails
     }
 
-    // 8) Send response
+    // 9) Send response
     res.status(201).json({
       status: 'success',
       data: {
@@ -162,7 +190,6 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     session.endSession();
   }
 });
-
 // Statistics Controllers
 exports.getOrderStats = catchAsync(async (req, res, next) => {
   const stats = await Order.aggregate([
