@@ -118,7 +118,7 @@ exports.createGuestUser = catchAsync(async (req, res, next) => {
   // Check for ANY user with this email (guest OR regular)
   const existingUser = await User.findOne({
     email: req.body.guestInfo.email,
-  });
+  }).select('+isGuest');
 
   if (existingUser) {
     if (existingUser.isGuest) {

@@ -151,7 +151,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
           shippingAddress: req.body.shippingAddress,
           paymentMethod: 'cash_on_delivery',
           paymentStatus: 'pending',
-          orderStatus: 'pending', // Ensure status is set
+          orderStatus: 'processing',
         },
       ],
       { session },
@@ -177,10 +177,13 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     res.status(201).json({
       status: 'success',
       data: {
-        orderNumber: order.orderNumber,
-        totalAmount: order.totalAmount,
-        orderStatus: order.orderStatus,
-        createdAt: order.createdAt,
+        data: {
+          //keep it nested just
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount,
+          orderStatus: order.orderStatus,
+          createdAt: order.createdAt,
+        },
       },
     });
   } catch (error) {
@@ -190,6 +193,7 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     session.endSession();
   }
 });
+
 // Statistics Controllers
 exports.getOrderStats = catchAsync(async (req, res, next) => {
   const stats = await Order.aggregate([
