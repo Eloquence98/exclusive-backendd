@@ -7,9 +7,9 @@ const userController = require('../controllers/userController');
 const router = express.Router();
 
 // Public routes (no auth required)
+// ✅ Validates EXC-YYYYMMDD-NNNN format; rejects invalid IDs immediately
 router.get(
-  '/track/:orderNumber',
-  orderController.aliasTrackOrder,
+  '/:orderNumber(EXC-\\d{8}-\\d{4})/tracking',
   orderController.trackOrder,
 );
 

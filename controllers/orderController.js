@@ -287,21 +287,33 @@ exports.getMyOrders = catchAsync(async (req, res, next) => {
 // Track order status
 exports.trackOrder = catchAsync(async (req, res, next) => {
   const { orderNumber } = req.params;
+  const { email } = req.query;
 
-  const features = new APIFeatures(
-    Order.findOne({ orderNumber }),
-    req.query,
-  ).limitFields();
+  if (!email) {
+    return next(
+      new AppError('Email address is required to track this order', 400),
+    );
+  }
 
-  const order = await features.query.lean();
+  // 3. Find order and populate user to access email
+  const order = await Order.findOne({ orderNumber }).populate('user');
 
   if (!order) {
     return next(new AppError('No order found with that tracking number', 404));
   }
 
-  // Clean up any _id or id if they appear in nested objects (just in case)
+  // 4. Verify Ownership
+  const orderEmail = order.user ? order.user.email : null;
+
+  if (!orderEmail || orderEmail.toLowerCase() !== email.toLowerCase()) {
+    return next(new AppError('Email does not match this order number', 403));
+  }
+
+  // 5. Clean up sensitive data (Keep your existing logic)
   delete order._id;
   delete order.id;
+  // Remove the user object entirely from response: not needed
+  delete order.user;
 
   if (order.statusHistory) {
     order.statusHistory = order.statusHistory.map(
