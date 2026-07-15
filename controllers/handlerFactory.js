@@ -24,7 +24,7 @@ exports.updateOne = (Model) =>
 
     res.status(200).json({
       status: 'success',
-      data: { data: doc },
+      data: doc,
     });
   });
 
@@ -33,7 +33,7 @@ exports.createOne = (Model) =>
     const doc = await Model.create(req.body);
     res.status(201).json({
       status: 'success',
-      data: { data: doc },
+      data: doc,
     });
   });
 
@@ -47,7 +47,7 @@ exports.getOne = (Model, popOptions) =>
 
     res.status(200).json({
       status: 'success',
-      data: { data: doc },
+      data: doc,
     });
   });
 
@@ -87,6 +87,6 @@ exports.getAll = (Model) =>
           hasPrevPage,
         },
       },
-      data: { data: docs },
+      data: docs,
     });
   });

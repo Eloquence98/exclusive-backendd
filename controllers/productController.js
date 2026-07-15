@@ -154,7 +154,7 @@ exports.getProductStats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { stats },
+    data: stats,
   });
 });
 
@@ -178,7 +178,7 @@ exports.getSalesStats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { stats },
+    data: stats,
   });
 });
 
@@ -207,7 +207,7 @@ exports.getInventoryStats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { stats },
+    data: stats,
   });
 });
 
@@ -238,7 +238,7 @@ exports.getCategoryStats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { stats },
+    data: stats,
   });
 });
 
@@ -297,7 +297,7 @@ exports.getProductBySlug = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { data: product },
+    data: product,
   });
 });
 
@@ -342,9 +342,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: products.length,
-    data: {
-      data: products,
-    },
+    data: products,
   });
 });
 

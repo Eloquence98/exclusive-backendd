@@ -182,14 +182,11 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     res.status(201).json({
       status: 'success',
       data: {
-        data: {
-          //keep it nested just
-          orderNumber: order.orderNumber,
-          accessToken,
-          totalAmount: order.totalAmount,
-          orderStatus: order.orderStatus,
-          createdAt: order.createdAt,
-        },
+        orderNumber: order.orderNumber,
+        accessToken,
+        totalAmount: order.totalAmount,
+        orderStatus: order.orderStatus,
+        createdAt: order.createdAt,
       },
     });
   } catch (error) {
@@ -220,7 +217,7 @@ exports.getOrderStats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { stats },
+    data: stats,
   });
 });
 
@@ -256,7 +253,7 @@ exports.getMonthlyStats = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { stats },
+    data: stats,
   });
 });
 
@@ -290,7 +287,7 @@ exports.getMyOrders = catchAsync(async (req, res, next) => {
         hasPrevPage: page > 1,
       },
     },
-    data: { orders },
+    data: orders,
   });
 });
 
@@ -444,7 +441,7 @@ exports.cancelOrder = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      data: { order },
+      data: order,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -530,7 +527,7 @@ exports.updateOrderStatus = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: { order },
+    data: order,
   });
 });
 
