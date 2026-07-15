@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const catchAsync = require('../utils/catchAsync');
@@ -337,6 +338,60 @@ exports.trackOrder = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: order,
+  });
+});
+
+exports.confirmOrder = catchAsync(async (req, res, next) => {
+  const { orderNumber } = req.params;
+  const { token } = req.query;
+
+  // 1. Validate Input
+  if (!token) {
+    return next(new AppError('Order access token is required', 400));
+  }
+
+  // 2. Hash Token
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  // 3. Find Order
+  // We query by hash directly. If you store expiresAt, add it to the query for extra safety:
+  // { orderNumber, orderAccessTokenHash: hashedToken, orderAccessTokenExpires: { $gt: Date.now() } }
+  const order = await Order.findOne({
+    orderNumber,
+    orderAccessTokenHash: hashedToken,
+  }).populate('user', 'name email');
+
+  if (!order) {
+    return next(
+      new AppError('Invalid or expired order confirmation link', 404),
+    );
+  }
+
+  // 4. Construct Response (Safe Access)
+  const orderData = {
+    orderNumber: order.orderNumber,
+    customer: {
+      name: order.shippingAddress.name,
+      email: order.user.email || order.shippingAddress.email,
+    },
+    products: order.products,
+    shippingAddress: order.shippingAddress,
+    payment: {
+      method: order.paymentMethod,
+      status: order.paymentStatus,
+    },
+    totals: {
+      subtotal: order.subtotal,
+      shippingCost: order.shippingCost,
+      totalAmount: order.totalAmount,
+    },
+    orderStatus: order.orderStatus,
+    estimatedDelivery: order.calculateEstimatedTimes(),
+  };
+
+  res.status(200).json({
+    status: 'success',
+    data: orderData,
   });
 });
 

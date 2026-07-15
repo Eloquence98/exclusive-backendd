@@ -13,6 +13,11 @@ router.get(
   orderController.trackOrder,
 );
 
+router.get(
+  '/:orderNumber(EXC-\\d{8}-\\d{4})/confirmation',
+  orderController.confirmOrder,
+);
+
 // Routes that work for both guests and authenticated users
 router.post(
   '/',

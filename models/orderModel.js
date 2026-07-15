@@ -13,19 +13,22 @@ const orderSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    products: [
-      {
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Product',
-          required: true,
+    products: {
+      type: [
+        {
+          product: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product',
+            required: true,
+          },
+          quantity: { type: Number, required: true, min: 1 },
+          priceAtPurchase: { type: Number, required: true },
+          name: { type: String, required: true },
+          imageUrl: { type: String, required: true },
         },
-        quantity: { type: Number, required: true, min: 1 },
-        priceAtPurchase: { type: Number, required: true },
-        name: { type: String, required: true },
-        imageUrl: { type: String, required: true },
-      },
-    ],
+      ],
+      _id: false,
+    },
     shippingAddress: {
       name: { type: String, required: true },
       phone: { type: String, required: true },
@@ -75,7 +78,15 @@ const orderSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true, versionKey: false },
+    toJSON: {
+      transform(doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        return ret;
+      },
+      virtuals: true,
+      versionKey: false,
+    },
     toObject: { virtuals: true, versionKey: false },
   },
 );
