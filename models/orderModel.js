@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const orderSchema = new mongoose.Schema(
   {
@@ -67,6 +68,10 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    orderAccessTokenHash: {
+      type: String,
+      select: false,
+    },
   },
   {
     timestamps: true,
@@ -74,6 +79,17 @@ const orderSchema = new mongoose.Schema(
     toObject: { virtuals: true, versionKey: false },
   },
 );
+
+orderSchema.methods.generateAccessToken = function () {
+  const accessToken = crypto.randomBytes(32).toString('hex');
+
+  this.orderAccessTokenHash = crypto
+    .createHash('sha256')
+    .update(accessToken)
+    .digest('hex');
+
+  return accessToken;
+};
 
 // Calculate estimated times for each status
 orderSchema.methods.calculateEstimatedTimes = function () {
@@ -214,6 +230,17 @@ orderSchema.post('save', function () {
     // eslint-disable-next-line no-console
     console.log(`[Order ${this._id}] Status → ${this.orderStatus}`);
   }
+});
+
+// remove access token once order is done
+orderSchema.pre('save', function (next) {
+  if (
+    this.isModified('orderStatus') &&
+    ['delivered', 'cancelled'].includes(this.orderStatus)
+  ) {
+    this.orderAccessTokenHash = undefined;
+  }
+  next();
 });
 
 // Indexes

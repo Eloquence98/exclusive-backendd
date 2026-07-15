@@ -157,12 +157,16 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       { session },
     );
 
-    // 7) Commit transaction
+    // 7 Create access token
+    const accessToken = order.generateAccessToken();
+    await order.save({ session });
+
+    // 8) Commit transaction
     await session.commitTransaction();
 
-    // 8) Send email (outside transaction to avoid rollback on email failure)
+    // 9) Send email (outside transaction to avoid rollback on email failure)
     try {
-      const url = `${process.env.FRONTEND_URL}/orders/${order.orderNumber}`;
+      const url = `${process.env.FRONTEND_URL}/orders/${order.orderNumber}/tracking?token=${accessToken}`;
       await new Email(req.user, url).sendOrderConfirmation(order);
       logger.info('Order confirmation email sent', {
         orderId: order._id,
@@ -173,13 +177,14 @@ exports.createOrder = catchAsync(async (req, res, next) => {
       // Don't fail the order if email fails
     }
 
-    // 9) Send response
+    // 10) Send response
     res.status(201).json({
       status: 'success',
       data: {
         data: {
           //keep it nested just
           orderNumber: order.orderNumber,
+          accessToken,
           totalAmount: order.totalAmount,
           orderStatus: order.orderStatus,
           createdAt: order.createdAt,
