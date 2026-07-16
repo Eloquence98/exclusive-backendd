@@ -291,7 +291,6 @@ exports.getMyOrders = catchAsync(async (req, res, next) => {
   });
 });
 
-// Track order status
 exports.trackOrder = catchAsync(async (req, res, next) => {
   const { orderNumber } = req.params;
   const { token, email } = req.query;
@@ -304,31 +303,30 @@ exports.trackOrder = catchAsync(async (req, res, next) => {
 
   let order;
 
-  // Token authentication (used immediately after checkout)
+  // 1. Token Authentication (Immediate post-checkout)
   if (token) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     order = await Order.findOne({
       orderNumber,
-      orderAccessTokenHash: hashedToken, // This will fail orderAccessTokenHash is undefined on succes or cancel orders  === expire
+      orderAccessTokenHash: hashedToken,
     });
 
     if (!order) {
       return next(
         new AppError(
-          'This tracking link has expired or is no longer valid. Please track your order using your order number and the email address used during checkout.',
+          'This tracking link has expired or is invalid. Please use your order number and email.',
           403,
         ),
       );
     }
-  } else {
-    // Email authentication (used for returning customers)
+  }
+  // 2. Email Authentication (Returning customers)
+  else {
     order = await Order.findOne({ orderNumber }).populate({
       path: 'user',
-      select: 'email',
-      match: {
-        email: email.toLowerCase(),
-      },
+      select: 'email', // Only fetch email
+      match: { email: email.toLowerCase() },
     });
 
     if (!order) {
@@ -337,6 +335,7 @@ exports.trackOrder = catchAsync(async (req, res, next) => {
       );
     }
 
+    // If populate match fails, order.user is null
     if (!order.user) {
       return next(
         new AppError('The email address does not match this order.', 403),
@@ -344,11 +343,18 @@ exports.trackOrder = catchAsync(async (req, res, next) => {
     }
   }
 
-  delete order.user;
+  // 3. Clean the response for public view
+  const orderObject = order.toObject();
+
+  // Remove sensitive/internal fields
+  delete orderObject.user;
+  delete orderObject.orderAccessTokenHash;
+  delete orderObject.__v;
+  delete orderObject._id;
 
   return res.status(200).json({
     status: 'success',
-    data: order,
+    data: orderObject,
   });
 });
 

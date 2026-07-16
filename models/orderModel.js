@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
+const statusHistorySchema = new mongoose.Schema(
+  {
+    status: { type: String, required: true },
+    note: String,
+    timestamp: { type: Date, default: Date.now },
+  },
+  { _id: false },
+);
+
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: {
@@ -56,13 +65,7 @@ const orderSchema = new mongoose.Schema(
       enum: ['processing', 'confirmed', 'shipped', 'delivered', 'cancelled'],
       default: 'processing',
     },
-    statusHistory: [
-      {
-        status: String,
-        timestamp: { type: Date, default: Date.now },
-        note: String,
-      },
-    ],
+    statusHistory: [statusHistorySchema],
     trackingNumber: {
       type: String,
       sparse: true,
@@ -70,6 +73,7 @@ const orderSchema = new mongoose.Schema(
     statusManuallyUpdated: {
       type: Boolean,
       default: false,
+      select: false,
     },
     orderAccessTokenHash: {
       type: String,
@@ -101,63 +105,6 @@ orderSchema.methods.generateAccessToken = function () {
 
   return accessToken;
 };
-
-// Calculate estimated times for each status
-orderSchema.methods.calculateEstimatedTimes = function () {
-  const now = new Date();
-  const createdAt = this.createdAt || now;
-
-  // Define progression times
-  const processingTime = 60 * 1000; // 1 minute
-  const shippingTime = 6 * processingTime; // 6 minutes
-  const deliveryTime = 24 * processingTime; // 24 minutes
-
-  return {
-    confirmedEstimate: new Date(createdAt.getTime() + processingTime),
-    shippedEstimate: new Date(
-      createdAt.getTime() + processingTime + shippingTime,
-    ),
-    deliveredEstimate: new Date(
-      createdAt.getTime() + processingTime + shippingTime + deliveryTime,
-    ),
-  };
-};
-
-// Add virtual for remaining time in current status
-orderSchema.virtual('statusProgress').get(function () {
-  if (this.orderStatus === 'delivered' || this.orderStatus === 'cancelled') {
-    return { percent: 100, remainingSeconds: 0 };
-  }
-
-  const estimates = this.calculateEstimatedTimes();
-  const now = new Date();
-  let targetDate;
-  let startDate;
-
-  switch (this.orderStatus) {
-    case 'processing':
-      targetDate = estimates.confirmedEstimate;
-      startDate = this.createdAt;
-      break;
-    case 'confirmed':
-      targetDate = estimates.shippedEstimate;
-      startDate = estimates.confirmedEstimate;
-      break;
-    case 'shipped':
-      targetDate = estimates.deliveredEstimate;
-      startDate = estimates.shippedEstimate;
-      break;
-    default:
-      return { percent: 0, remainingSeconds: 0 };
-  }
-
-  const total = targetDate - startDate;
-  const elapsed = now - startDate;
-  const percent = Math.min(100, Math.max(0, (elapsed / total) * 100));
-  const remainingSeconds = Math.max(0, Math.ceil((targetDate - now) / 1000));
-
-  return { percent, remainingSeconds };
-});
 
 // Static method for auto-progressing order statuses
 orderSchema.statics.autoProgressStatus = async function () {
