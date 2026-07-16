@@ -294,45 +294,59 @@ exports.getMyOrders = catchAsync(async (req, res, next) => {
 // Track order status
 exports.trackOrder = catchAsync(async (req, res, next) => {
   const { orderNumber } = req.params;
-  const { email } = req.query;
+  const { token, email } = req.query;
 
-  if (!email) {
+  if (!token && !email) {
     return next(
-      new AppError('Email address is required to track this order', 400),
+      new AppError('Provide either a tracking token or email address.', 400),
     );
   }
 
-  // 3. Find order and populate user to access email
-  const order = await Order.findOne({ orderNumber }).populate('user');
+  let order;
 
-  if (!order) {
-    return next(new AppError('No order found with that tracking number', 404));
+  // Token authentication (used immediately after checkout)
+  if (token) {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    order = await Order.findOne({
+      orderNumber,
+      orderAccessTokenHash: hashedToken, // This will fail orderAccessTokenHash is undefined on succes or cancel orders  === expire
+    });
+
+    if (!order) {
+      return next(
+        new AppError(
+          'This tracking link has expired or is no longer valid. Please track your order using your order number and the email address used during checkout.',
+          403,
+        ),
+      );
+    }
+  } else {
+    // Email authentication (used for returning customers)
+    order = await Order.findOne({ orderNumber }).populate({
+      path: 'user',
+      select: 'email',
+      match: {
+        email: email.toLowerCase(),
+      },
+    });
+
+    if (!order) {
+      return next(
+        new AppError('No order found with that tracking number.', 404),
+      );
+    }
+
+    if (!order.user) {
+      return next(
+        new AppError('The email address does not match this order.', 403),
+      );
+    }
   }
 
-  // 4. Verify Ownership
-  const orderEmail = order.user ? order.user.email : null;
-
-  if (!orderEmail || orderEmail.toLowerCase() !== email.toLowerCase()) {
-    return next(new AppError('Email does not match this order number', 403));
-  }
-
-  // 5. Clean up sensitive data (Keep your existing logic)
-  delete order._id;
-  delete order.id;
-  // Remove the user object entirely from response: not needed
   delete order.user;
 
-  if (order.statusHistory) {
-    order.statusHistory = order.statusHistory.map(
-      ({ status, timestamp, note }) => ({
-        status,
-        timestamp,
-        note,
-      }),
-    );
-  }
-
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: order,
   });
@@ -383,7 +397,6 @@ exports.confirmOrder = catchAsync(async (req, res, next) => {
       totalAmount: order.totalAmount,
     },
     orderStatus: order.orderStatus,
-    estimatedDelivery: order.calculateEstimatedTimes(),
   };
 
   res.status(200).json({
