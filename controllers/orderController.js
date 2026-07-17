@@ -167,7 +167,22 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
     // 9) Send email (outside transaction to avoid rollback on email failure)
     try {
-      const url = `${process.env.FRONTEND_URL}/orders/${order.orderNumber}/tracking?token=${accessToken}`;
+      // 1. Detect Domain (Dynamic)
+      let domain = req.headers.origin;
+
+      // Fallbacks for domain detection only
+      if (!domain && req.headers.referer) {
+        const urlObj = new URL(req.headers.referer);
+        domain = `${urlObj.protocol}//${urlObj.host}`;
+      }
+      if (!domain) {
+        domain = process.env.FRONTEND_URL || 'http://localhost:3000';
+      }
+
+      // 2. Define Path Explicitly (Static - Matches YOUR frontend)
+      const path = '/orders/track';
+      const url = `${domain}${path}?orderNumber=${order.orderNumber}&token=${accessToken}`;
+
       await new Email(req.user, url).sendOrderConfirmation(order);
       logger.info('Order confirmation email sent', {
         orderId: order._id,
