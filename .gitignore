@@ -17,7 +17,6 @@ config.env
 
 # IDE settings
 .idea/
-.vscode/
 *.sublime-project
 *.sublime-workspace
 .project
