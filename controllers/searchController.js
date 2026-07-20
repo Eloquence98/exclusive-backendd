@@ -139,7 +139,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
 
   const skip = (page - 1) * limit;
 
-  const products = await Product.aggregate([
+  const pipeline = [
     {
       $search: {
         index: 'default',
@@ -219,6 +219,42 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         },
       },
     },
+  ];
+
+  // Optional filters
+  const filterStage = {};
+
+  if (req.query.category) {
+    filterStage.category = req.query.category;
+  }
+
+  if (req.query.brand) {
+    filterStage.brand = req.query.brand;
+  }
+
+  if (req.query.onSale === 'true') {
+    filterStage.onSale = true;
+  }
+
+  if (req.query.minPrice || req.query.maxPrice) {
+    filterStage.price = {};
+
+    if (req.query.minPrice) {
+      filterStage.price.$gte = Number(req.query.minPrice);
+    }
+
+    if (req.query.maxPrice) {
+      filterStage.price.$lte = Number(req.query.maxPrice);
+    }
+  }
+
+  if (Object.keys(filterStage).length > 0) {
+    pipeline.push({
+      $match: filterStage,
+    });
+  }
+
+  pipeline.push(
     {
       $addFields: {
         score: {
@@ -261,7 +297,9 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         score: 1,
       },
     },
-  ]);
+  );
+
+  const products = await Product.aggregate(pipeline);
 
   res.status(200).json({
     status: 'success',
