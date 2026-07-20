@@ -1,0 +1,40 @@
+# Environment variables (SECRETS)
+
+.env
+.env.\*
+.env.local
+.env.production
+
+# Other sensitive files
+
+_.pem
+_.key
+secrets/
+credentials/
+
+# Dependencies
+
+node_modules/
+\*\*/node_modules/
+
+# Build outputs
+
+/build/
+/dist/
+/.next/
+/out/
+
+# Testing artifacts
+
+/coverage/
+
+# Large data files
+
+_.csv
+_.xlsx
+\*.sqlite
+
+# Generated/minified code
+
+_.min.js
+_.map
