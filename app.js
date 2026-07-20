@@ -11,6 +11,7 @@ const hpp = require('hpp');
 const { stream } = require('./utils/logger');
 const globalErrorHandler = require('./controllers/errorController');
 const productRouter = require('./routes/productRoutes');
+const searchRoutes = require('./routes/searchRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const orderRouter = require('./routes/orderRoutes');
@@ -112,6 +113,7 @@ app.use((req, res, next) => {
 
 // API Routes
 app.use('/api/v1/products', productRouter);
+app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);

@@ -10,7 +10,6 @@ const router = express.Router();
 router.use('/:productId/reviews', reviewRouter);
 
 router.route('/stats').get(productController.getPublicProductStats);
-router.route('/search').get(productController.searchProducts);
 router
   .route('/top-rated')
   .get(
