@@ -93,7 +93,8 @@ exports.getProductSuggestions = catchAsync(async (req, res, next) => {
     },
     {
       $project: {
-        _id: 1,
+        _id: 0,
+        id: '$_id',
         title: 1,
         slug: 1,
         imageCover: 1,
@@ -278,7 +279,8 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
     },
     {
       $project: {
-        _id: 1,
+        _id: 0,
+        id: '$_id',
         title: 1,
         slug: 1,
         description: 1,
@@ -294,7 +296,6 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         isFeatured: 1,
         ratingsAverage: 1,
         ratingsQuantity: 1,
-        score: 1,
       },
     },
   );
