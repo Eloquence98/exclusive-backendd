@@ -44,6 +44,17 @@ const createSendToken = (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
   try {
+    // EARLY CHECK: If user exists with OAuth (Google) identity, block signup
+    const existingUser = await User.findOne({ email: req.body.email });
+    if (existingUser && existingUser.authIdentities.length > 0) {
+      return next(
+        new AppError(
+          'This email is linked to a Google account. Please sign in with Google instead.',
+          400,
+        ),
+      );
+    }
+
     // First try to convert guest user if exists
     const convertedUser = await userController.convertGuestToUser(
       req.body.email,
@@ -98,6 +109,16 @@ exports.login = catchAsync(async (req, res, next) => {
 
   if (!user) {
     return next(new AppError('Incorrect email or password', 401));
+  }
+
+  // EARLY CHECK: Google-only user trying password login
+  if (!user.password) {
+    return next(
+      new AppError(
+        'This account uses Google sign-in. Please sign in with Google.',
+        401,
+      ),
+    );
   }
 
   // Debug log for password comparison
@@ -286,6 +307,16 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     return next(new AppError('There is no user with that email address.', 404));
   }
 
+  // EARLY CHECK: Google-only user has no password to reset
+  if (user.authIdentities.length > 0 && !user.password) {
+    return next(
+      new AppError(
+        'This account uses Google sign-in. Password reset is not available. Please sign in with Google.',
+        400,
+      ),
+    );
+  }
+
   // 2) Generate the random reset token
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
@@ -339,6 +370,17 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('Token is invalid or has expired', 400));
   }
+
+  // EARLY CHECK: Google-only user has no password to reset
+  if (user.authIdentities.length > 0 && !user.password) {
+    return next(
+      new AppError(
+        'This account uses Google sign-in. Password reset is not available.',
+        400,
+      ),
+    );
+  }
+
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
   user.passwordResetToken = undefined;
@@ -354,6 +396,16 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
   const user = await User.findById(req.user.id).select('+password');
+
+  // EARLY CHECK: Google-only user has no password to update
+  if (!user.password) {
+    return next(
+      new AppError(
+        'This account uses Google sign-in. Password update is not available.',
+        400,
+      ),
+    );
+  }
 
   // 2) Check if POSTed current password is correct
   if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {

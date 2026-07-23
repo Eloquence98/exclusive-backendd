@@ -93,6 +93,18 @@ userSchema.index(
   },
 );
 
+userSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false, // removes __v
+  transform: function (doc, ret) {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+
+    return ret;
+  },
+});
+
 userSchema.pre('save', async function (next) {
   if (!this.password || !this.isModified('password')) return next();
 
@@ -120,6 +132,7 @@ userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword,
 ) {
+  if (!userPassword) return false; // Google/OAuth users have no password
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
