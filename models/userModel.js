@@ -3,6 +3,25 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 
+const authIdentitySchema = new mongoose.Schema(
+  {
+    provider: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+    providerAccountId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -32,7 +51,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: function () {
-      return !this.isGuest;
+      return this.isNew && this.authIdentities.length === 0;
     },
     minLength: 8,
     select: false,
@@ -40,15 +59,18 @@ const userSchema = new mongoose.Schema({
   passwordConfirm: {
     type: String,
     required: function () {
-      return !this.isGuest;
+      return this.isNew && this.authIdentities.length === 0;
     },
     validate: {
       validator: function (el) {
-        if (this.isGuest) return true;
-        return el === this.password;
+        return !this.password || el === this.password;
       },
       message: 'Passwords are not the same!',
     },
+  },
+  authIdentities: {
+    type: [authIdentitySchema],
+    default: [],
   },
   passwordChangedAt: Date,
   passwordResetToken: String,
@@ -60,20 +82,30 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.pre('save', async function (next) {
-  if (this.isGuest) return next();
+userSchema.index(
+  {
+    'authIdentities.provider': 1,
+    'authIdentities.providerAccountId': 1,
+  },
+  {
+    unique: true,
+    sparse: true,
+  },
+);
 
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function (next) {
+  if (!this.password || !this.isModified('password')) return next();
 
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordConfirm = undefined;
+
   next();
 });
 
 userSchema.pre('save', function (next) {
-  if (this.isGuest) return next();
-
-  if (!this.isModified('password') || this.isNew) return next();
+  if (!this.password || !this.isModified('password') || this.isNew) {
+    return next();
+  }
 
   this.passwordChangedAt = Date.now() - 1000;
   next();

@@ -1,6 +1,5 @@
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable prettier/prettier */
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
@@ -9,6 +8,8 @@ const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 const userController = require('./userController');
 const { logger } = require('../utils/logger');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -106,6 +107,73 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 3) If everything ok, send token to client
+  createSendToken(user, 200, res);
+});
+
+exports.googleLogin = catchAsync(async (req, res, next) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    return next(new AppError('Google ID token is required.', 400));
+  }
+
+  let payload;
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    payload = ticket.getPayload();
+  } catch (error) {
+    return next(new AppError('Invalid Google authentication.', 401));
+  }
+
+  // eslint-disable-next-line camelcase
+  const { sub: providerAccountId, email, name, email_verified } = payload;
+
+  // eslint-disable-next-line camelcase
+  if (!email || !providerAccountId || !email_verified) {
+    return next(new AppError('Google account information is invalid.', 401));
+  }
+
+  let user = await User.findOne({
+    authIdentities: {
+      $elemMatch: {
+        provider: 'google',
+        providerAccountId,
+      },
+    },
+  });
+
+  // User has never logged in with Google before
+  if (!user) {
+    user = await User.findOne({ email });
+
+    // Existing account found, attach Google login
+    if (user) {
+      user.authIdentities.push({
+        provider: 'google',
+        providerAccountId,
+      });
+
+      await user.save();
+    } else {
+      // Completely new user
+      user = await User.create({
+        name,
+        email,
+        authIdentities: [
+          {
+            provider: 'google',
+            providerAccountId,
+          },
+        ],
+      });
+    }
+  }
+
   createSendToken(user, 200, res);
 });
 
