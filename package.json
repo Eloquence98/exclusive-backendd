@@ -16,6 +16,7 @@
   "author": "Eloquence98",
   "license": "ISC",
   "dependencies": {
+    "@getbrevo/brevo": "^6.0.2",
     "bcryptjs": "^3.0.0",
     "compression": "^1.8.0",
     "cookie-parser": "^1.4.7",

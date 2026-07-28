@@ -2,29 +2,18 @@
 const { convert } = require('html-to-text');
 const nodemailer = require('nodemailer');
 const pug = require('pug');
+const brevo = require('../config/brevo');
 
 module.exports = class Email {
   constructor(user, url) {
     this.to = user.email;
     this.firstName = user.name.split(' ')[0];
     this.url = url;
-    this.from = `Admin <${process.env.EMAIL_FROM}>`;
+    this.from = `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`;
   }
 
+  // Dev only — Mailtrap SMTP, unchanged
   newTransport() {
-    if (process.env.NODE_ENV === 'production') {
-      // Brevo
-      return nodemailer.createTransport({
-        host: process.env.BREVO_SMTP_SERVER,
-        port: process.env.BREVO_SMTP_PORT,
-        auth: {
-          user: process.env.BREVO_SMTP_LOGIN,
-          pass: process.env.BREVO_PASSWORD,
-        },
-      });
-    }
-
-    // Development - Use MailTrap
     return nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
@@ -35,30 +24,53 @@ module.exports = class Email {
     });
   }
 
+  // Render pug template to HTML — shared by both paths
+  renderTemplate(template, subject) {
+    return pug.renderFile(`${__dirname}/../views/email/${template}.pug`, {
+      firstName: this.firstName,
+      url: this.url,
+      subject,
+      order: this.order,
+    });
+  }
+
+  async sendViaBrevoApi(html, subject) {
+    const sendSmtpEmail = {
+      sender: {
+        name: process.env.EMAIL_FROM_NAME,
+        email: process.env.EMAIL_FROM,
+      },
+      to: [{ email: this.to }],
+      subject,
+      htmlContent: html,
+      textContent: convert(html),
+    };
+
+    await brevo.sendTransacEmail(sendSmtpEmail);
+  }
+
+  async sendViaMailtrap(html, subject) {
+    const mailOptions = {
+      from: this.from,
+      to: this.to,
+      subject,
+      html,
+      text: convert(html),
+    };
+
+    await this.newTransport().sendMail(mailOptions);
+  }
+
   // Send the actual email
   async send(template, subject) {
     try {
-      // 1) Render HTML based on a pug template
-      const html = pug.renderFile(
-        `${__dirname}/../views/email/${template}.pug`,
-        {
-          firstName: this.firstName,
-          url: this.url,
-          subject,
-          order: this.order,
-        },
-      );
+      const html = this.renderTemplate(template, subject);
 
-      // 2) Define email options
-      const mailOptions = {
-        from: this.from,
-        to: this.to,
-        subject,
-        html,
-        text: convert(html),
-      };
-
-      await this.newTransport().sendMail(mailOptions);
+      if (process.env.NODE_ENV === 'production') {
+        await this.sendViaBrevoApi(html, subject);
+      } else {
+        await this.sendViaMailtrap(html, subject);
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error sending email:', error);
@@ -66,6 +78,7 @@ module.exports = class Email {
     }
   }
 
+  // All methods below are completely unchanged
   async sendWelcome() {
     await this.send('welcome', 'Welcome to the Exclusive Family!');
   }
@@ -89,7 +102,6 @@ module.exports = class Email {
     this.order = order;
     this.oldStatus = oldStatus;
 
-    // Create friendly status names for subject
     const statusNames = {
       processing: 'Processing',
       confirmed: 'Confirmed',
