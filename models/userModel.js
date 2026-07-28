@@ -51,7 +51,11 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: function () {
-      return this.isNew && this.authIdentities.length === 0;
+      return (
+        this.isNew &&
+        !this.isGuest &&
+        (!this.authIdentities || this.authIdentities.length === 0)
+      );
     },
     minLength: 8,
     select: false,
@@ -59,7 +63,7 @@ const userSchema = new mongoose.Schema({
   passwordConfirm: {
     type: String,
     required: function () {
-      return this.isNew && this.authIdentities.length === 0;
+      return this.isNew && !this.isGuest && this.authIdentities.length === 0;
     },
     validate: {
       validator: function (el) {
