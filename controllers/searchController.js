@@ -120,7 +120,13 @@ exports.getProductSuggestions = catchAsync(async (req, res, next) => {
  *
  * Purpose: Full product search results.
  * Returns: Search-ranked products with filtering, pagination, and sorting support.
- * Uses: Atlas Search text search with relevance scoring.
+ *
+ * Uses:
+ * - Atlas Search compound query
+ * - autocomplete operator for search-as-you-type behavior
+ * - text operator for full-text relevance scoring
+ *
+ * This keeps full search results consistent with autocomplete suggestions.
  */
 exports.searchProducts = catchAsync(async (req, res, next) => {
   logger.info(
@@ -140,28 +146,100 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
 
   const skip = (page - 1) * limit;
 
+  // Build Atlas Search filters
+  const searchFilters = [
+    {
+      equals: {
+        path: 'isActive',
+        value: true,
+      },
+    },
+    {
+      equals: {
+        path: 'isDeleted',
+        value: false,
+      },
+    },
+  ];
+
+  if (req.query.category) {
+    searchFilters.push({
+      equals: {
+        path: 'category',
+        value: req.query.category,
+      },
+    });
+  }
+
+  if (req.query.brand) {
+    searchFilters.push({
+      equals: {
+        path: 'brand',
+        value: req.query.brand,
+      },
+    });
+  }
+
+  if (req.query.onSale === 'true') {
+    searchFilters.push({
+      equals: {
+        path: 'onSale',
+        value: true,
+      },
+    });
+  }
+
+  if (req.query.minPrice || req.query.maxPrice) {
+    const priceRange = {
+      range: {
+        path: 'price',
+      },
+    };
+
+    if (req.query.minPrice) {
+      priceRange.range.gte = Number(req.query.minPrice);
+    }
+
+    if (req.query.maxPrice) {
+      priceRange.range.lte = Number(req.query.maxPrice);
+    }
+
+    searchFilters.push(priceRange);
+  }
+
   const pipeline = [
     {
       $search: {
         index: 'default',
+
         compound: {
-          must: [
+          /**
+           * SHOULD combines multiple search strategies.
+           *
+           * autocomplete:
+           * - Handles partial queries.
+           * - Example: "bl" -> "Black Shirt"
+           *
+           * text:
+           * - Handles normal full-text relevance.
+           * - Example: "black shirt"
+           *
+           * minimumShouldMatch ensures at least one search
+           * clause matches.
+           */
+          should: [
+            // -------------------------
+            // AUTOCOMPLETE SEARCH
+            // -------------------------
+
             {
-              text: {
+              autocomplete: {
                 query: q,
-                path: ['title', 'description', 'brand', 'category', 'tags'],
+                path: 'title',
                 fuzzy: {
                   maxEdits: 1,
                   prefixLength: 2,
                 },
-              },
-            },
-          ],
-          should: [
-            {
-              text: {
-                query: q,
-                path: 'title',
                 score: {
                   boost: {
                     value: 5,
@@ -169,10 +247,15 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
                 },
               },
             },
+
             {
-              text: {
+              autocomplete: {
                 query: q,
                 path: 'brand',
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
                 score: {
                   boost: {
                     value: 3,
@@ -180,82 +263,119 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
                 },
               },
             },
+
+            {
+              autocomplete: {
+                query: q,
+                path: 'category',
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
+                score: {
+                  boost: {
+                    value: 2,
+                  },
+                },
+              },
+            },
+
+            {
+              autocomplete: {
+                query: q,
+                path: 'tags',
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
+                score: {
+                  boost: {
+                    value: 2,
+                  },
+                },
+              },
+            },
+
+            // -------------------------
+            // FULL TEXT SEARCH
+            // -------------------------
+
+            {
+              text: {
+                query: q,
+                path: 'title',
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
+                score: {
+                  boost: {
+                    value: 10,
+                  },
+                },
+              },
+            },
+
+            {
+              text: {
+                query: q,
+                path: 'brand',
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
+                score: {
+                  boost: {
+                    value: 6,
+                  },
+                },
+              },
+            },
+
             {
               text: {
                 query: q,
                 path: 'category',
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
                 score: {
                   boost: {
-                    value: 2,
+                    value: 4,
                   },
                 },
               },
             },
+
             {
               text: {
                 query: q,
                 path: 'tags',
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
                 score: {
                   boost: {
-                    value: 2,
+                    value: 3,
                   },
                 },
               },
             },
           ],
-          filter: [
-            {
-              equals: {
-                path: 'isActive',
-                value: true,
-              },
-            },
-            {
-              equals: {
-                path: 'isDeleted',
-                value: false,
-              },
-            },
-          ],
+
+          minimumShouldMatch: 1,
+
+          /**
+           * Filters are executed inside Atlas Search.
+           * They restrict results without affecting relevance score.
+           */
+          filter: searchFilters,
         },
       },
     },
-  ];
 
-  // Optional filters
-  const filterStage = {};
-
-  if (req.query.category) {
-    filterStage.category = req.query.category;
-  }
-
-  if (req.query.brand) {
-    filterStage.brand = req.query.brand;
-  }
-
-  if (req.query.onSale === 'true') {
-    filterStage.onSale = true;
-  }
-
-  if (req.query.minPrice || req.query.maxPrice) {
-    filterStage.price = {};
-
-    if (req.query.minPrice) {
-      filterStage.price.$gte = Number(req.query.minPrice);
-    }
-
-    if (req.query.maxPrice) {
-      filterStage.price.$lte = Number(req.query.maxPrice);
-    }
-  }
-
-  if (Object.keys(filterStage).length > 0) {
-    pipeline.push({
-      $match: filterStage,
-    });
-  }
-
-  pipeline.push(
     {
       $addFields: {
         score: {
@@ -263,6 +383,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         },
       },
     },
+
     {
       $sort: {
         score: -1,
@@ -271,12 +392,15 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         createdAt: -1,
       },
     },
+
     {
       $skip: skip,
     },
+
     {
       $limit: limit,
     },
+
     {
       $project: {
         _id: 0,
@@ -298,7 +422,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
         ratingsQuantity: 1,
       },
     },
-  );
+  ];
 
   const products = await Product.aggregate(pipeline);
 
