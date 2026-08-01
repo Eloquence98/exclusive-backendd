@@ -114,7 +114,7 @@ docker compose up --build
 ### Seed development data (optional)
 
 ```bash
-docker compose exec api node dev-data/data/import-dev-data.js --import
+docker compose exec api node dev-data/data/import-data.js --import
 ```
 
 The API will then be available locally.

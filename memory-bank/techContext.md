@@ -65,8 +65,6 @@
 - **rimraf** ^5.0.5 — clean build dir
 - **copyfiles** ^2.4.1 — copy email templates to dist
 - **cross-env** ^7.0.3 — cross-platform env vars
-- **@faker-js/faker** ^10.5.0 — seed data generation
-- **axios** ^1.18.1 — HTTP client (dev/testing)
 
 ## Development Setup
 
@@ -172,9 +170,8 @@ server.js
 
 ### Data Seeding
 
-- `dev-data/data/` contains JSON seed files + import script
-- Run via: `docker compose exec api node dev-data/data/import-dev-data.js --import`
-- Uses `@faker-js/faker` for generating test data
+- `dev-data/data/` contains static JSON product data + import script
+- Run via: `docker compose exec api node dev-data/data/import-data.js --import`
 
 ### API Standards
 

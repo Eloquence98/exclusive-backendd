@@ -116,6 +116,7 @@
 - ❌ `handleFactory.deleteOne` performs hard delete — products use `isDeleted` flag but factory DELETE also removes document
 - ❌ No thumbnail variant for product card images (only full-size cover)
 - ❌ No order delivery address validation beyond schema requirements
+- ✅ Dynamic product generation removed — `seed-products.js` deleted, `@faker-js/faker` and `axios` removed from devDependencies; `import-data.js` now only imports static `products.json`
 
 ## Current Status
 

@@ -11,7 +11,10 @@
     "build:server": "esbuild server.js --bundle --platform=node --outdir=dist --minify --sourcemap",
     "clean": "rimraf dist",
     "copy:email-templates": "copyfiles -u 1 \"views/email/**/*\" dist/views/email",
-    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d"
+    "docker:prod": "cross-env NODE_ENV=production TARGET=prod docker-compose up --build -d",
+    "seed:import": "node dev-data/data/seed-products.js --import",
+    "seed:delete": "node dev-data/data/seed-products.js --delete",
+    "seed:reset": "node dev-data/data/seed-products.js --reset"
   },
   "author": "Eloquence98",
   "license": "ISC",
@@ -43,8 +46,6 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.5.0",
-    "axios": "^1.18.1",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
     "esbuild": "^0.25.0",
