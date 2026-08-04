@@ -1,159 +1,123 @@
-# Exclusive Backend
+# Exclusive Backend API
 
-A production-inspired REST API powering **Exclusive**, a modern e-commerce application built with **Node.js**, **Express**, and **MongoDB**.
-
-The project focuses on building the backend of a real online store—from secure authentication and product management to order processing, reviews, analytics, and automated background jobs. It follows a modular architecture with reusable controllers, centralized error handling, and scalable API design.
-
----
+REST API service for the Exclusive e-commerce platform. Provides authentication, product catalog, order management, reviews, and search capabilities for a separate frontend client.
 
 ## Features
 
-### User Authentication & Authorization
-
-- Secure JWT authentication
-- Protected routes and role-based access control
-- Password reset via email
-- Profile management
-- Guest checkout support
-- Guest account conversion to registered users
-
-### Product Management
-
-- Full CRUD operations for products
-- Product image upload and automatic resizing
-- Featured, trending, and category-based products
-- Slug-based product URLs
-- Inventory tracking and sales insights
-
-### Orders
-
-- Create and manage customer orders
-- Track order status
-- Cancel eligible orders
-- View personal order history
-- Admin order management
-- Monthly sales and order statistics
-
-### Reviews
-
-- Product review system
-- Customer-specific reviews
-- Update and delete reviews
-- Nested review routes
-
-### API Features
-
-- Filtering
-- Sorting
-- Pagination
-- Field limiting
-- Search
-- Consistent error handling
-- Reusable CRUD controller factory
-
-### Background Tasks
-
-- Automated order processing
-- Scheduled sale cleanup jobs
-
----
+- **User Authentication**: JWT-based signup/login, Google OAuth, guest checkout, password reset
+- **User Management**: Profile updates, photo upload, role-based access (user/admin)
+- **Product Management**: Full CRUD, image upload/resizing, categories, sales/pricing, inventory
+- **Order Management**: Transactional order creation, tracking, cancellation, status progression, monthly stats
+- **Reviews**: Product reviews with rating aggregation
+- **Search**: Full-text search and autocomplete via MongoDB Atlas Search
+- **Analytics**: Order, product, inventory, and category statistics
+- **Background Jobs**: Automated order status progression, sale expiration cleanup
 
 ## Tech Stack
 
-- Node.js
-- Express.js
-- MongoDB & Mongoose
-- JWT Authentication
-- Multer
-- Sharp
-- Docker & Docker Compose
-- Pug (Email Templates)
+| Dependency          | Version                       |
+| ------------------- | ----------------------------- |
+| Node.js             | >= 14                         |
+| Express             | ^4.21.0                       |
+| Mongoose            | ^8.6.3                        |
+| MongoDB             | latest (replica set required) |
+| jsonwebtoken        | ^9.0.2                        |
+| bcryptjs            | ^3.0.0                        |
+| multer              | ^2.0.0                        |
+| sharp               | ^0.33.5                       |
+| node-cron           | ^4.1.0                        |
+| nodemailer          | ^6.10.0                       |
+| @getbrevo/brevo     | ^6.0.2                        |
+| pug                 | ^3.0.3                        |
+| winston             | ^3.17.0                       |
+| google-auth-library | ^10.9.0                       |
 
----
+## Prerequisites
 
-## Project Structure
+- Node.js >= 14
+- MongoDB instance running in **replica set mode** (required for Atlas Search and transactions)
 
-```
-controllers/
-models/
-routes/
-utils/
-lib/
-dev-data/
-```
-
-The application follows a layered architecture where routes delegate requests to controllers, controllers interact with Mongoose models, and shared utilities provide reusable functionality such as filtering, authentication, logging, email handling, and error management.
-
----
-
-## Getting Started
-
-### Clone the repository
+## Install
 
 ```bash
-git clone https://github.com/Eloquence98/exclusive-backendd.git
-cd exclusive-backendd
+npm install
 ```
 
-### Configure environment variables
+## Environment Variables
 
-Create a `.env` file in the project root and provide the required configuration such as:
+Create a `.env` file in the project root:
 
-- Database connection
-- JWT secrets
-- Email credentials
-- Frontend URL
-- Application port
+| Variable                | Purpose                                        |
+| ----------------------- | ---------------------------------------------- |
+| `NODE_ENV`              | `development`, `production`, or `test`         |
+| `PORT`                  | Server port (default 3000)                     |
+| `MONGODB_URI`           | MongoDB connection string                      |
+| `JWT_SECRET`            | JWT signing secret                             |
+| `JWT_EXPIRES_IN`        | Token expiration (e.g., `90d`)                 |
+| `JWT_COOKIE_EXPIRES_IN` | Cookie expiration in days                      |
+| `BREVO_API_KEY`         | Brevo transactional email API key (production) |
+| `EMAIL_HOST`            | SMTP host (Mailtrap in dev)                    |
+| `EMAIL_PORT`            | SMTP port                                      |
+| `EMAIL_USERNAME`        | SMTP username                                  |
+| `EMAIL_PASSWORD`        | SMTP password                                  |
+| `EMAIL_FROM`            | Sender email address                           |
+| `EMAIL_FROM_NAME`       | Sender display name                            |
+| `FRONTEND_URL`          | Frontend application URL                       |
+| `GOOGLE_CLIENT_ID`      | Google OAuth client ID                         |
 
-### Start the application
+## Running
+
+### Development
+
+```bash
+npm run dev
+```
+
+### Production
+
+```bash
+npm run build
+npm run start:prod
+```
+
+### Docker
 
 ```bash
 docker compose up --build
 ```
 
-### Seed development data (optional)
+### Seed Data
 
 ```bash
-docker compose exec api node dev-data/data/import-data.js --import
+npm run seed:import   # Import products from dev-data/data/products.json
+npm run seed:delete   # Delete all products
+npm run seed:reset    # Delete then re-import products
 ```
 
-The API will then be available locally.
+## API Documentation
 
----
+All routes are mounted under `/api/v1`. See `api.http` / `api.example.http` for example requests, and the `routes/` directory for endpoint definitions:
 
-## API Overview
+- `/api/v1/users` — authentication and user management
+- `/api/v1/products` — product catalog
+- `/api/v1/orders` — order management
+- `/api/v1/reviews` — product reviews
+- `/api/v1/search` — full-text search and suggestions
 
-The backend exposes REST endpoints for:
+## Project Structure
 
-- Authentication
-- Users
-- Products
-- Orders
-- Reviews
-
-It also includes administrative endpoints for inventory management, analytics, reporting, and order administration.
-
----
-
-## Why I Built This
-
-This project was built to explore how a production-style e-commerce backend is structured beyond simple CRUD applications.
-
-While building it, I focused on writing modular, maintainable code by separating responsibilities across controllers, models, middleware, and utilities. The project also introduced concepts such as reusable controller factories, image processing, scheduled background jobs, authentication flows, and analytics endpoints that are commonly found in real-world backend systems.
-
----
-
-## Future Improvements
-
-- Payment gateway integration
-- API documentation with Swagger/OpenAPI
-- Automated test suite
-- Caching layer
-- Rate limiting enhancements
-- CI/CD pipeline
-
----
+```
+controllers/    # Request handlers (auth, products, orders, reviews, search, users)
+models/         # Mongoose schemas (User, Product, Order, Review, Counter)
+routes/         # Express route definitions
+utils/          # Shared utilities (API features, error handling, email, logging)
+lib/cornJobs/   # Scheduled background jobs (order processing, sale cleanup)
+config/         # Service configuration (Brevo email client)
+views/email/    # Pug email templates
+dev-data/data/   # Static seed data and import scripts
+public/img/     # Uploaded product and user images
+```
 
 ## License
 
-This project is licensed under the ISC License.
+ISC
