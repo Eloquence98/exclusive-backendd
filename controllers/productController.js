@@ -27,13 +27,13 @@ exports.aliasProductSummary = (req, res, next) => {
 
 // Alias Routes Middleware
 exports.aliasTopRated = (req, res, next) => {
-  req.query.limit = '5';
+  req.query.limit = '8';
   req.query.sort = '-ratingsAverage,price';
   next();
 };
 
 exports.aliasTrending = (req, res, next) => {
-  req.query.limit = '5';
+  req.query.limit = '8';
   req.query.sort = '-ratingsQuantity,-ratingsAverage';
   next();
 };
